@@ -39,6 +39,16 @@ class TMatrix:
 
         return result
 
+    # Exercise 1.4
+    # returns the product of the stored transformation matrix with a vector
+    def mult_vec(self, vector):
+        result = Vector4()
+        for i in range(self.size):
+            for j in range(len(vector.l)):
+                result.l[i] += self.m[i][j] * vector.l[j]
+
+        return result
+
 # Exercise 1.3
 class Vector4:
     l = []
@@ -159,6 +169,12 @@ def run():
     print("Vector 2")
     print(rotcev.l)
     print(euclidean_distance(vector, rotcev))
+
+    # Exercise 1.4
+    # Showing that it works
+    print("Multiplying A with v")
+    v = Vector4(1, 2, 3, 1)
+    print(a.mult_vec(v).l)
 
 if __name__ == "__main__":
     run()
