@@ -39,6 +39,50 @@ class TMatrix:
 
         return result
 
+# Exercise 1.2
+# Translation matrix
+def make_trans_mat(x, y, z):
+    result = TMatrix()
+    result.m[0][3] = x
+    result.m[1][3] = y
+    result.m[2][3] = z
+
+    return result
+
+# Exercise 1.2
+# Rotation matrix
+def make_rot_mat(degree, axis):
+    result = TMatrix()
+    degree_sin = math.sin(degree)
+    degree_cos = math.cos(degree)
+    if axis == 'x':
+        result.m[1][1] = degree_cos
+        result.m[1][2] = -(degree_sin)
+        result.m[2][1] = degree_sin
+        result.m[2][2] = degree_cos
+    elif axis == 'y':
+        result.m[0][0] = degree_cos
+        result.m[0][2] = degree_sin
+        result.m[2][0] = -(degree_sin)
+        result.m[2][2] = degree_cos
+    elif axis == 'z':
+        result.m[0][0] = degree_cos
+        result.m[0][1] = -(degree_sin)
+        result.m[1][0] = degree_sin
+        result.m[1][1] = degree_cos
+
+    return result
+
+# Exercise 1.2
+# Scaling matrix
+def make_scale_mat(sx, sy, sz):
+    result = TMatrix()
+    result.m[0][0] = sx
+    result.m[1][1] = sy
+    result.m[2][2] = sz
+
+    return result
+
 def run():
 
     # Exercise 1.1
@@ -66,7 +110,22 @@ def run():
     print("Result: ")
     print(c.m)
 
-    
+    # Exercise 1.2
+    # Showing that it works
+    print("Translation matrix")
+    print(make_trans_mat(1, 2, 3).m)
+
+    print("Rotation matrix 1")
+    print(make_rot_mat(45, 'x').m)
+
+    print("Rotation matrix 2")
+    print(make_rot_mat(90, 'y').m)
+
+    print("Rotation matrix 3")
+    print(make_rot_mat(120, 'z').m)
+
+    print("Scaling matrix")
+    print(make_scale_mat(1, 2, 3).m) 
 
 if __name__ == "__main__":
     run()
