@@ -11,20 +11,20 @@ class TMatrix:
     m = [[]]
 
     # Exercise 1.1
-    # create an identity matrix
+    # create a matrix
     def __init__(self, l = None):
 
         # initialize all values as 0s
         self.m = [[0 for x in range(self.size)] for y in range(self.size)]
 
+        # identity matrix
         if l is None:
             # all diagonal values are 1s
             for i in range(self.size):
                 self.m[i][i] = 1
+        
+        # set values individulaly from a list
         else:
-            # Exercise 1.1
-            # create a matrix while individually setting the values
-            # ... from a list
             self.m = [[l[x+self.size*y] for x in range(self.size)] for y in range(self.size)]
 
     # Exercise 1.1
@@ -40,10 +40,9 @@ class TMatrix:
         return result
 
 def run():
-    print("Constructing identity matrix with default constructor")
-    identity_matrix = TMatrix()
-    print(identity_matrix.m)
 
+    # Exercise 1.1
+    # Showing that it works by multiplying A and B
     print("Constructing matrix A")
     l = []
     for i in range(1, 17):
@@ -66,6 +65,8 @@ def run():
     c = a.mult(b)
     print("Result: ")
     print(c.m)
+
+    
 
 if __name__ == "__main__":
     run()
