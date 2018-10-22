@@ -39,6 +39,18 @@ class TMatrix:
 
         return result
 
+# Exercise 1.3
+class Vector4:
+    l = []
+
+    def __init__(self, a = 0, b = 0, c = 0, d = 0):
+        new = []
+        new.append(a)
+        new.append(b)
+        new.append(c)
+        new.append(d)
+        self.l = new
+
 # Exercise 1.2
 # Translation matrix
 def make_trans_mat(x, y, z):
@@ -83,6 +95,16 @@ def make_scale_mat(sx, sy, sz):
 
     return result
 
+# Exercise 1.3
+# Euclidean distance between two homogeneous points (Vector4)
+def euclidean_distance(point1, point2):
+    sum = 0
+    for i in range(len(point1.l)):
+        # print(math.pow((point1.l[i] - point2.l[i]), 2))
+        sum += math.pow((point1.l[i] - point2.l[i]), 2)
+
+    return math.sqrt(sum)
+
 def run():
 
     # Exercise 1.1
@@ -126,6 +148,17 @@ def run():
 
     print("Scaling matrix")
     print(make_scale_mat(1, 2, 3).m) 
+
+    # Exercise 1.3
+    # Showing that it works
+    print("Euclidean distance")
+    vector = Vector4(2, 4, 6, 2)
+    rotcev = Vector4(0, 0, 0, 1)
+    print("Vector 1")
+    print(vector.l)
+    print("Vector 2")
+    print(rotcev.l)
+    print(euclidean_distance(vector, rotcev))
 
 if __name__ == "__main__":
     run()
