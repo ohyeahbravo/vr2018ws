@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# Hiyeon Kim, 118654
+# Lars Meyer, 114719
 
 import math
 
@@ -119,15 +121,15 @@ def run():
 
     # Exercise 1.1
     # Showing that it works by multiplying A and B
-    print("Constructing matrix A")
+    print("Exercise 1.1")
     l = []
     for i in range(1, 17):
         l.append(i)
     a = TMatrix(l)
     print("Matrix A: ")
     print(a.m)
+    print()
 
-    print("Constructing matrix B")
     l = []
     for i in range(1, 16, 2):
         l.append(i)
@@ -136,60 +138,97 @@ def run():
     b = TMatrix(l)
     print("Matrix B: ")
     print(b.m)
+    print()
 
     print("Multiplying A and B")
     c = a.mult(b)
     print("Result: ")
     print(c.m)
+    print()
 
     # Exercise 1.2
     # Showing that it works
-    print("Translation matrix")
+    print("Exercise 1.2")
+    print("Translation matrix:")
     print(make_trans_mat(1, 2, 3).m)
+    print()
 
-    print("Rotation matrix 1")
+    print("Rotation matrix 1:")
     print(make_rot_mat(45, 'x').m)
+    print()
 
-    print("Rotation matrix 2")
+    print("Rotation matrix 2:")
     print(make_rot_mat(90, 'y').m)
+    print()
 
-    print("Rotation matrix 3")
+    print("Rotation matrix 3:")
     print(make_rot_mat(120, 'z').m)
+    print()
 
-    print("Scaling matrix")
-    print(make_scale_mat(1, 2, 3).m) 
+    print("Scaling matrix:")
+    print(make_scale_mat(1, 2, 3).m)
+    print()
 
     # Exercise 1.3
     # Showing that it works
-    print("Euclidean distance")
+    print("Exercise 1.3")
     vector = Vector4(2, 4, 6, 2)
     rotcev = Vector4(0, 0, 0, 1)
     print("Vector 1")
     print(vector.l)
+    print()
+
     print("Vector 2")
     print(rotcev.l)
+    print()
+
+    print("Euclidean distance")
     print(euclidean_distance(vector, rotcev))
+    print()
 
     # Exercise 1.4
     # Showing that it works
-    print("Multiplying A with v")
+    print("Exercise 1.4")
+    print("Multiplying A with v. Result:")
     v = Vector4(1, 2, 3, 1)
     print(a.mult_vec(v).l)
+    print()
 
     # Exercise 1.5
     # NOTE: we found these angles by trying the rotation ourselves
     # using physical objects in the real world
-    print("Rotation ambiguity")
+    print("Exercise 1.5")
+    print("Rotation disambiguities")
     r90x = make_rot_mat(90, 'x')
     r_a_z = make_rot_mat(90, 'z')
     r_b_y = make_rot_mat(270, 'y')
     mult_a_z = r90x.mult(r_a_z)
     mult_b_y = r_b_y.mult(r90x)
-    print("alpha")
+    print()
+    print("Not rounded:")
+    print("alpha = 90°")
+    print("Matrix:")
     print(mult_a_z.m)
-    print("beta")
+    print()
+    print("beta = 270°")
+    print("Matrix:")
     print(mult_b_y.m)
+    print()
 
+    mult_a_z_rounded = TMatrix();
+    mult_b_y_rounded = TMatrix();
 
+    mult_a_z_rounded.m = [[0 if (abs(x) < 1e-15) else x for x in y] for y in mult_a_z.m]
+    mult_b_y_rounded.m = [[0 if (abs(x) < 1e-15) else x for x in y] for y in mult_b_y.m]
+
+    print("Rounded with ε = 10^-15:")
+    print("alpha = 90°")
+    print("Matrix:")
+    print(mult_a_z_rounded.m)
+    print()
+    print("beta = 270°")
+    print("Matrix:")
+    print(mult_b_y_rounded.m)
+    
 if __name__ == "__main__":
     run()
