@@ -75,8 +75,8 @@ def make_trans_mat(x, y, z):
 # Rotation matrix
 def make_rot_mat(degree, axis):
     result = TMatrix()
-    degree_sin = math.sin(degree)
-    degree_cos = math.cos(degree)
+    degree_sin = math.sin(math.radians(degree))
+    degree_cos = math.cos(math.radians(degree))
     if axis == 'x':
         result.m[1][1] = degree_cos
         result.m[1][2] = -(degree_sin)
@@ -175,6 +175,21 @@ def run():
     print("Multiplying A with v")
     v = Vector4(1, 2, 3, 1)
     print(a.mult_vec(v).l)
+
+    # Exercise 1.5
+    # NOTE: we found these angles by trying the rotation ourselves
+    # using physical objects in the real world
+    print("Rotation ambiguity")
+    r90x = make_rot_mat(90, 'x')
+    r_a_z = make_rot_mat(90, 'z')
+    r_b_y = make_rot_mat(270, 'y')
+    mult_a_z = r90x.mult(r_a_z)
+    mult_b_y = r_b_y.mult(r90x)
+    print("alpha")
+    print(mult_a_z.m)
+    print("beta")
+    print(mult_b_y.m)
+
 
 if __name__ == "__main__":
     run()
