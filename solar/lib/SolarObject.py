@@ -37,9 +37,16 @@ class SolarObject:
 
         self.rotation_inclination = ROTATION_INCLINATION
 
-        self.orbit_velocity = 0.001
+        # consider orbit duration and velocity
+        if (ORBIT_DURATION > 0.0):
+            self.orbit_velocity = (1.0/ORBIT_DURATION)
+        else:
+            self.orbit_velocity = 0
         # Exercise 2.5: consider rotation duration and velocity
-        self.rotation_velocity = 0.001 * ROTATION_DURATION
+        if (ROTATION_DURATION > 0.0):
+            self.rotation_velocity = (1.0/ROTATION_DURATION)
+        else:
+            self.rotation_velocity = 0
 
         ### resources ###
         # init geometries of solar object

@@ -68,7 +68,7 @@ class SolarSystem(avango.script.Script):
         self.earth = SolarObject(
             NAME = "earth",
             TEXTURE_PATH = SP.EARTH_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.EARTH_DIAMETER,
             ORBIT_RADIUS = SP.EARTH_ORBIT_RADIUS,
@@ -98,7 +98,7 @@ class SolarSystem(avango.script.Script):
         self.mercury = SolarObject(
             NAME = "mercury",
             TEXTURE_PATH = SP.MERCURY_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.MERCURY_DIAMETER,
             ORBIT_RADIUS = SP.MERCURY_ORBIT_RADIUS,
@@ -111,7 +111,7 @@ class SolarSystem(avango.script.Script):
         self.venus = SolarObject(
             NAME = "venus",
             TEXTURE_PATH = SP.VENUS_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.VENUS_DIAMETER,
             ORBIT_RADIUS = SP.VENUS_ORBIT_RADIUS,
@@ -124,7 +124,7 @@ class SolarSystem(avango.script.Script):
         self.mars = SolarObject(
             NAME = "mars",
             TEXTURE_PATH = SP.MARS_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.MARS_DIAMETER,
             ORBIT_RADIUS = SP.MARS_ORBIT_RADIUS,
@@ -137,7 +137,7 @@ class SolarSystem(avango.script.Script):
         self.jupiter = SolarObject(
             NAME = "jupiter",
             TEXTURE_PATH = SP.JUPITER_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.JUPITER_DIAMETER,
             ORBIT_RADIUS = SP.JUPITER_ORBIT_RADIUS,
@@ -191,7 +191,7 @@ class SolarSystem(avango.script.Script):
         self.saturn = SolarObject(
             NAME = "saturn",
             TEXTURE_PATH = SP.SATURN_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.SATURN_DIAMETER,
             ORBIT_RADIUS = SP.SATURN_ORBIT_RADIUS,
@@ -204,7 +204,7 @@ class SolarSystem(avango.script.Script):
         self.uranus = SolarObject(
             NAME = "uranus",
             TEXTURE_PATH = SP.URANUS_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.URANUS_DIAMETER,
             ORBIT_RADIUS = SP.URANUS_ORBIT_RADIUS,
@@ -217,7 +217,7 @@ class SolarSystem(avango.script.Script):
         self.neptune = SolarObject(
             NAME = "neptune",
             TEXTURE_PATH = SP.NEPTUNE_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.NEPTUNE_DIAMETER,
             ORBIT_RADIUS = SP.NEPTUNE_ORBIT_RADIUS,
