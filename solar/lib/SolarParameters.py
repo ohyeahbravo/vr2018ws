@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# Hiyeon Kim, 118654
+# Lars Meyer, 114719
+
 SUN_DIAMETER = 1392000.0 * 0.000001 * 0.05 # downscale sun geometry relative to planet sizes
 
 MERCURY_DIAMETER = 4878.0 * 0.000001 # in km
