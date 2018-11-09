@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# Hiyeon Kim, 118654
+# Lars Meyer, 114719
+
 ### import guacamole libraries
 import avango
 import avango.gua

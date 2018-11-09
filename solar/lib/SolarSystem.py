@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# Hiyeon Kim, 118654
+# Lars Meyer, 114719
+
 ### import guacamole libraries ###
 import avango
 import avango.gua
@@ -94,7 +97,6 @@ class SolarSystem(avango.script.Script):
 
         ## Exercise 2.7: initialize remaining planets
 
-        #init Mercury
         self.mercury = SolarObject(
             NAME = "mercury",
             TEXTURE_PATH = SP.MERCURY_TEXTURE,
@@ -186,8 +188,6 @@ class SolarSystem(avango.script.Script):
             ROTATION_DURATION = SP.JUPITER_MOON3_ROTATION_DURATION,
             )
 
-        # TODO : ask if the saturn orbit radius is intentionally not adjusted
-        # because we corrected it
         self.saturn = SolarObject(
             NAME = "saturn",
             TEXTURE_PATH = SP.SATURN_TEXTURE,
