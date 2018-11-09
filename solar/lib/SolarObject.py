@@ -121,6 +121,10 @@ class SolarObject:
     def update_rotation(self):
         ## Exercise 2.5: update rotation every frame with the given velocity
         self.object_geometry.Transform.value *= avango.gua.make_rot_mat(self.rotation_velocity * self.sf_time_scale_factor.value, 0.0, 1.0, 0.0)
+        # this line also works
+        #self.rotation_inclination_node.Transform.value = self.rotation_inclination_node.Transform.value * avango.gua.make_rot_mat(self.rotation_velocity * self.sf_time_scale_factor.value, 0.0, 1.0, 0.0)
+        # change the order of multiplication like this would make planets rotate around red axis
+        #self.rotation_inclination_node.Transform.value = avango.gua.make_rot_mat(self.rotation_velocity * self.sf_time_scale_factor.value, 0.0, 1.0, 0.0) * self.rotation_inclination_node.Transform.value
 
     ### callback functions ###
     def frame_callback(self): # evaluated once per frame
