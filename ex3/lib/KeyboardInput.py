@@ -65,6 +65,7 @@ class KeyboardInput(avango.script.Script):
 
 
     def evaluate(self): # perform update when fields change (with dependency evaluation)
+        #return
 
         ## Exercise 3.2
         # ToDo: calculate rotation input per frame that corresponds to given velocity (self.rot_velocity)

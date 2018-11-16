@@ -95,4 +95,4 @@ class Crane:
         ## Exercise 3.4
         # hook
         self.hook = Hook()
-        self.hook.my_constructor(PARENT_NODE = self.arm2.arm_end_node, SIZE = 0.01, TARGET_LIST = self.target_list)
+        self.hook.my_constructor(PARENT_NODE = self.arm2.arm_end_node, SIZE = 0.02, TARGET_LIST = self.target_list)

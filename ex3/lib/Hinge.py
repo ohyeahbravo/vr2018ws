@@ -63,12 +63,12 @@ class Constraint(avango.script.Script):
         print("const eval")
       
         # check and apply rotation constraints
-        # x     y       z
+        # y     x       z
         _head, _pitch, _roll = lib.Utilities.get_euler_angles(self.sf_mat.value)
 
         # ToDo: apply rotation constraints here        
-        self.sf_mat.value = avango.gua.make_rot_mat(min(max(self.min_angle, _head), self.max_angle),1.0,0.0,0.0) \
-                            * avango.gua.make_rot_mat(min(max(self.min_angle, _pitch), self.max_angle),0.0,1.0,0.0) \
+        self.sf_mat.value = avango.gua.make_rot_mat(min(max(self.min_angle, _head), self.max_angle),0.0,1.0,0.0) \
+                            * avango.gua.make_rot_mat(min(max(self.min_angle, _pitch), self.max_angle),1.0,0.0,0.0) \
                             * avango.gua.make_rot_mat(min(max(self.min_angle, _roll), self.max_angle),0.0,0.0,1.0)
 
 
@@ -124,12 +124,8 @@ class Hinge:
         self.constraints.set_min_max_values(ROT_CONSTRAINT_MIN, ROT_CONSTRAINT_MAX)
         
         ## Exercise 3.2
-        # ToDo: make weak connection between contraints and accumulation!
-        # ...
         # You connect fields together with the "connect_from" function!
         self.acc.sf_rot_input.connect_from(SF_ROT_INPUT)
-        # self.constraints.sf_mat.connect_weak_from(self.acc.sf_mat)
-        # self.acc.sf_mat.connect_from(self.constraints.sf_mat)
-        self.hinge_node.Transform.connect_from(self.acc.sf_mat)
-
-
+        self.constraints.sf_mat.connect_from(self.acc.sf_mat)
+        self.acc.sf_mat.connect_weak_from(self.constraints.sf_mat)
+        self.hinge_node.Transform.connect_from(self.constraints.sf_mat)
