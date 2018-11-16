@@ -29,7 +29,7 @@ class Accumulator(avango.script.Script):
     ## callback functions
     def evaluate(self):
         # perform update when fields change (with dependency evaluation)
-        print("accum eval ")
+        #print("accum eval ")
         # print(self.sf_rot_input.value)
         
         ## Exercise 3.2 : accumulate rotation input here
@@ -60,7 +60,7 @@ class Constraint(avango.script.Script):
     ## callback functions
     def evaluate(self):
         # perform update when fields change (with dependency evaluation)
-        print("const eval")
+        #print("const eval")
       
         # check and apply rotation constraints
         # y     x       z

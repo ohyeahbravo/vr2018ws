@@ -30,6 +30,11 @@ class KeyboardInput(avango.script.Script):
 
     sf_max_fps = avango.SFFloat()
     sf_max_fps.value = 60.0 # initial value
+
+    sf_last_time = avango.SFFloat()
+    sf_last_time.value = 0.0
+
+    sf_frame_time = avango.SFFloat()
         
 
     ## constructor
@@ -49,6 +54,8 @@ class KeyboardInput(avango.script.Script):
         ## init field connections
         self.sf_time_in.connect_from(self.timeSensor.Time)
         self.sf_fps_toggle_button.connect_from(self.keyboardSensor.Button14)
+
+        self.always_evaluate(True)
  
 
     ### callback functions ###
@@ -68,12 +75,17 @@ class KeyboardInput(avango.script.Script):
         #return
 
         ## Exercise 3.2
-        # ToDo: calculate rotation input per frame that corresponds to given velocity (self.rot_velocity)
-        _rot_input = self.rot_velocity/self.sf_max_fps.value
+        # calculate rotation input per frame that corresponds to given velocity (self.rot_velocity)
+        #_rot_input = self.rot_velocity/self.sf_max_fps.value
 
+        # Exercise 3.5
         # ToDo: adapt rotation input to varying frame rates
         # time.time() # absolute timestamp
-
+        # couldn't get time.time() to work, so using sf_time_in
+        current_time = self.sf_time_in.value
+        self.sf_frame_time.value = current_time - self.sf_last_time.value
+        self.sf_last_time.value = current_time
+        _rot_input = self.rot_velocity * self.sf_frame_time.value;
 
         ## update rot_value0
         if self.keyboardSensor.Button4.value == True: # KEY_LEFT
