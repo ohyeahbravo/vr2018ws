@@ -110,7 +110,23 @@ def make_scale_mat(sx, sy, sz):
 
 # Exercise 1.3
 # Euclidean distance between two homogeneous points (Vector4)
-def euclidean_distance(point1, point2):
+'''
+FEEDBACK: To compute the distance in Euclidean space, 
+all points have to be normalized by their homogeneous component.
+For the first point, the homogeneous component is 2.
+'''
+def normalize(point):
+    if point.l[3] != 0:
+        v = Vector4()
+        v.l = [dim / point.l[3] for dim in point.l]
+        return v
+
+def euclidean_distance(apoint1, apoint2):
+
+    # normalize the vectors by their homogeneous component
+    point1 = normalize(apoint1)
+    point2 = normalize(apoint2)
+
     sum = 0
     for i in range(len(point1.l)):
         # print(math.pow((point1.l[i] - point2.l[i]), 2))
