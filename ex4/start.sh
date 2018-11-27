@@ -22,7 +22,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GUACAMOLE/lib
 
 
 # run daemon
-python3 ./daemon.py > /dev/null &
+python3 ./daemon.py &
 #python3 daemon.py
 
 # run program

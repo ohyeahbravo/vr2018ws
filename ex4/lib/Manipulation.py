@@ -171,7 +171,7 @@ class ManipulationManager(avango.script.Script):
 
 
     ##########################
-    ### Exercise 4.2
+    ### Exercise 4.1
     ##########################
 
     ## This function is called when the dragging button 
@@ -185,17 +185,18 @@ class ManipulationManager(avango.script.Script):
                 _node.Material.value.set_uniform("Color", _node.CurrentColor.value) # switch to dragging material
                 self.dragged_objects_list.append(_node) # add node for dragging
           
-                ## TODO: add code if necessary
-
+                # save the world transform before appending it to the hand
+                _node.DraggingOffsetMatrix.value = _node.WorldTransform.value
+                self.hand_transform.Children.value.append(_node)
+                _node.WorldTransform.value = _node.DraggingOffsetMatrix.value
+                self.hand_transform.Parent.value.Parent.value.Children.value.remove(_node)
 
     ## This function is called while the dragging button
     ## (e.g. mouse button for isotonic input) is pressed
     def object_dragging(self):
         pass
         ## TODO: add code if necessary
-
-  
-
+        
     ## This function is called when the dragging button
     ## (e.g. mouse button for isotonic input) is released
     def stop_dragging(self):  
@@ -203,13 +204,16 @@ class ManipulationManager(avango.script.Script):
         for _node in self.dragged_objects_list:      
             _node.CurrentColor.value = avango.gua.Vec4(0.0, 1.0, 0.0, 1.0)
             _node.Material.value.set_uniform("Color", _node.CurrentColor.value) # switch to highlight material
-    
+            # reverse process from start_dragging
+            _node.DraggingOffsetMatrix.value = _node.WorldTransform.value
+            self.hand_transform.Children.value.remove(_node)
+            self.hand_transform.Parent.value.Parent.value.Children.value.append(_node)
+            _node.WorldTransform.value = _node.DraggingOffsetMatrix.value
+
         self.dragged_objects_list = [] # clear list
 
-        ## TODO: add code if necessary
-
  
-    ########################## End of Exercise 4.2
+    ########################## End of Exercise 4.1
 
 
     def update_dragging_candidates(self):
