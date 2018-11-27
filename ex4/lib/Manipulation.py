@@ -6,6 +6,7 @@ import avango.gua
 import avango.script
 from avango.script import field_has_changed
 import avango.daemon
+import time
 
 ### import application libraries
 from lib.Device import MouseInput, BlueSpacemouseInput
@@ -421,10 +422,13 @@ class IsotonicPositionControlManipulation(Manipulation):
 
 
 ##########################
-### Exercise 4.3
+### Exercise 4.2
 ##########################
 
 class IsotonicRateControlManipulation(Manipulation):
+
+    _last_time = 0.0
+    _scaling_factor = 0.05
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "isotonic-rate-control"
@@ -436,18 +440,44 @@ class IsotonicRateControlManipulation(Manipulation):
 
     ## implement respective base-class function
     def manipulate(self):
-        pass
+        # pass
         ## TODO: add code
-    
+
+        # mouse input is the velocity
+        _x = self.mf_dof.value[0] * self._scaling_factor
+        _y = self.mf_dof.value[1] * self._scaling_factor
+        _z = self.mf_dof.value[2] * self._scaling_factor
+
+        # compute elapsed time
+        if (self._last_time == 0.0): # first run
+            self._last_time = time.time()
+            pass
+
+        # traveled distance = (elapsed) time * velocity
+        _distance_x = (time.time() - self._last_time) * _x
+        _distance_y = (time.time() - self._last_time) * _y
+        _distance_z = (time.time() - self._last_time) * _z
+
+        # accumulate input
+        _new_mat = avango.gua.make_trans_mat(_distance_x, _distance_y, _distance_z) * self.sf_mat.value
+
+        # possibly clamp matrix (to screen space borders)
+        _new_mat = self.clamp_matrix(_new_mat)
+
+        self.sf_mat.value = _new_mat # apply new matrix to field
     
     ## implement respective base-class function
     def reset(self):
-        pass
+        # pass
         ## TODO: add code
+        self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
 
 
 
 class IsotonicAccelerationControlManipulation(Manipulation):
+    
+    _last_time = 0.0
+    _scaling_factor = 0.05
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "isotonic-acceleration-control"
@@ -459,25 +489,48 @@ class IsotonicAccelerationControlManipulation(Manipulation):
 
     ## implement respective base-class function
     def manipulate(self):
-        pass
+        # pass
         ## TODO: add code
 
+        # mouse input is the acceleration
+        _x = self.mf_dof.value[0] * self._scaling_factor
+        _y = self.mf_dof.value[1] * self._scaling_factor
+        _z = self.mf_dof.value[2] * self._scaling_factor
+
+        # compute elapsed time
+        if (self._last_time == 0.0): # first run
+            self._last_time = time.time()
+            pass
+
+        _distance_x = 0.5 * _x * (time.time() - self._last_time)**2
+        _distance_y = 0.5 * _y * (time.time() - self._last_time)**2
+        _distance_z = 0.5 * _z * (time.time() - self._last_time)**2
+
+        # accumulate input
+        _new_mat = avango.gua.make_trans_mat(_distance_x, _distance_y, _distance_z) * self.sf_mat.value
+
+        # possibly clamp matrix (to screen space borders)
+        _new_mat = self.clamp_matrix(_new_mat)
+
+        self.sf_mat.value = _new_mat # apply new matrix to field
 
     ## implement respective base-class function
     def reset(self):
-        pass
+        # pass
         ## TODO: add code
-
-########################## End of Exercise 4.3
+        self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
+########################## End of Exercise 4.2
     
 
 ##########################
-### Exercise 4.4
+### Exercise 4.3
 ##########################
 
 ### ELASTIC DEVICE MAPPINGS ###
 
 class ElasticPositionControlManipulation(Manipulation):
+
+    _scaling_factor = 0.01
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "elastic-position-control"
@@ -489,17 +542,36 @@ class ElasticPositionControlManipulation(Manipulation):
 
     ## implement respective base-class function
     def manipulate(self):
-        pass
+        # pass
         # TODO: add code
+        _x = self.mf_dof.value[0]
+        _y = self.mf_dof.value[1]
+        _z = self.mf_dof.value[2]
+          
+        _x *= self._scaling_factor
+        _y *= self._scaling_factor
+        _z *= self._scaling_factor
+       
+        # accumulate input
+        _new_mat = avango.gua.make_trans_mat(_x, _y, _z) * self.sf_mat.value
+
+        # possibly clamp matrix (to screen space borders)
+        _new_mat = self.clamp_matrix(_new_mat)
+
+        self.sf_mat.value = _new_mat # apply new matrix to field
 
 
     ## implement respective base-class function
     def reset(self):
         pass
         # TODO: add code
+        self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
 
 
 class ElasticRateControlManipulation(Manipulation):
+
+    _last_time = 0.0
+    _scaling_factor = 0.01
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "elastic-rate-control"
@@ -511,17 +583,42 @@ class ElasticRateControlManipulation(Manipulation):
 
     ## implement respective base-class function
     def manipulate(self):
-        pass
+        # pass
         # TODO: add code
+        # mouse input is the velocity
+        _x = self.mf_dof.value[0] * self._scaling_factor
+        _y = self.mf_dof.value[1] * self._scaling_factor
+        _z = self.mf_dof.value[2] * self._scaling_factor
 
-         
+        # compute elapsed time
+        if (self._last_time == 0.0): # first run
+            self._last_time = time.time()
+            pass
+
+        # traveled distance = (elapsed) time * velocity
+        _distance_x = (time.time() - self._last_time) * _x
+        _distance_y = (time.time() - self._last_time) * _y
+        _distance_z = (time.time() - self._last_time) * _z
+
+        # accumulate input
+        _new_mat = avango.gua.make_trans_mat(_distance_x, _distance_y, _distance_z) * self.sf_mat.value
+
+        # possibly clamp matrix (to screen space borders)
+        _new_mat = self.clamp_matrix(_new_mat)
+
+        self.sf_mat.value = _new_mat # apply new matrix to field
+    
     ## implement respective base-class function
     def reset(self):
-        pass
-        # TODO: add code
+        # pass
+        ## TODO: add code
+        self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
 
 
 class ElasticAccelerationControlManipulation(Manipulation):
+
+    _last_time = 0.0
+    _scaling_factor = 0.01
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "elastic-acceleration-control"
@@ -530,16 +627,36 @@ class ElasticAccelerationControlManipulation(Manipulation):
         self.mf_dof.connect_from(MF_DOF)
         self.mf_buttons.connect_from(MF_BUTTONS)
 
-
     ## implement respective base-class function
     def manipulate(self): 
         pass
         # TODO: add code
-             
+        # mouse input is the acceleration
+        _x = self.mf_dof.value[0] * self._scaling_factor
+        _y = self.mf_dof.value[1] * self._scaling_factor
+        _z = self.mf_dof.value[2] * self._scaling_factor
+
+        # compute elapsed time
+        if (self._last_time == 0.0): # first run
+            self._last_time = time.time()
+            pass
+
+        _distance_x = 0.5 * _x * (time.time() - self._last_time)**2
+        _distance_y = 0.5 * _y * (time.time() - self._last_time)**2
+        _distance_z = 0.5 * _z * (time.time() - self._last_time)**2
+
+        # accumulate input
+        _new_mat = avango.gua.make_trans_mat(_distance_x, _distance_y, _distance_z) * self.sf_mat.value
+
+        # possibly clamp matrix (to screen space borders)
+        _new_mat = self.clamp_matrix(_new_mat)
+
+        self.sf_mat.value = _new_mat # apply new matrix to field
 
     ## implement respective base-class function
     def reset(self):
-        pass
-        # TODO: add code
-        
-########################## End of Exercise 4.4
+        # pass
+        ## TODO: add code
+        self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
+
+########################## End of Exercise 4.3
