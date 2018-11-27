@@ -1,0 +1,15 @@
+Isotonic Position Control:
+- just like positioning objects in the real world in all directions (pick up, move, place), for example, by dragging
+
+Isotonic Rate Control:
+- 
+
+Isotonic Acceleration Control:
+- like a gas pedal/throttle/accelerator in a car: the more you displace it, the higher the acceleration
+
+Elastic Position Control:
+- controlling the movement of the crane in the logistics facility, as it requires only one-dimensional movement
+
+Elastic Rate Control:
+
+Elastic Acceleration Control:
