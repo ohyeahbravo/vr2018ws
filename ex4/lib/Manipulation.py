@@ -428,7 +428,10 @@ class IsotonicPositionControlManipulation(Manipulation):
 class IsotonicRateControlManipulation(Manipulation):
 
     _last_time = 0.0
-    _scaling_factor = 0.05
+    _scaling_factor = 0.001
+    _position_x = 0.0
+    _position_y = 0.0
+    _position_z = 0.0
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "isotonic-rate-control"
@@ -453,13 +456,14 @@ class IsotonicRateControlManipulation(Manipulation):
             self._last_time = time.time()
             pass
 
-        # traveled distance = (elapsed) time * velocity
-        _distance_x = (time.time() - self._last_time) * _x
-        _distance_y = (time.time() - self._last_time) * _y
-        _distance_z = (time.time() - self._last_time) * _z
+        # position = position + (elapsed) time * velocity
+        # the cursor keeps moving as long as the mouse isn't in the center
+        self._position_x += (time.time() - self._last_time) * _x
+        self._position_y += (time.time() - self._last_time) * _y
+        self._position_z += (time.time() - self._last_time) * _z
 
         # accumulate input
-        _new_mat = avango.gua.make_trans_mat(_distance_x, _distance_y, _distance_z) * self.sf_mat.value
+        _new_mat = avango.gua.make_trans_mat(self._position_x, self._position_y, self._position_z) * self.sf_mat.value
 
         # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
@@ -530,7 +534,8 @@ class IsotonicAccelerationControlManipulation(Manipulation):
 
 class ElasticPositionControlManipulation(Manipulation):
 
-    _scaling_factor = 0.01
+    # _scaling_factor = 0.01
+    _scaling_factor = 0.25
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "elastic-position-control"
@@ -553,7 +558,9 @@ class ElasticPositionControlManipulation(Manipulation):
         _z *= self._scaling_factor
        
         # accumulate input
-        _new_mat = avango.gua.make_trans_mat(_x, _y, _z) * self.sf_mat.value
+        # _new_mat = avango.gua.make_trans_mat(_x, _y, _z) * self.sf_mat.value
+        # don't accumulate input
+        _new_mat = avango.gua.make_trans_mat(_x, _y, _z) # * self.sf_mat.value
 
         # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
@@ -563,7 +570,7 @@ class ElasticPositionControlManipulation(Manipulation):
 
     ## implement respective base-class function
     def reset(self):
-        pass
+        # pass
         # TODO: add code
         self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
 
@@ -571,7 +578,7 @@ class ElasticPositionControlManipulation(Manipulation):
 class ElasticRateControlManipulation(Manipulation):
 
     _last_time = 0.0
-    _scaling_factor = 0.01
+    _scaling_factor = 0.001
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "elastic-rate-control"
