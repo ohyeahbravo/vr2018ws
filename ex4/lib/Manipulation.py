@@ -481,7 +481,10 @@ class IsotonicRateControlManipulation(Manipulation):
 class IsotonicAccelerationControlManipulation(Manipulation):
     
     _last_time = 0.0
-    _scaling_factor = 0.05
+    _scaling_factor = 0.001
+    _position_x = 0.0
+    _position_y = 0.0
+    _position_z = 0.0
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "isotonic-acceleration-control"
@@ -506,12 +509,32 @@ class IsotonicAccelerationControlManipulation(Manipulation):
             self._last_time = time.time()
             pass
 
-        _distance_x = 0.5 * _x * (time.time() - self._last_time)**2
-        _distance_y = 0.5 * _y * (time.time() - self._last_time)**2
-        _distance_z = 0.5 * _z * (time.time() - self._last_time)**2
+        if (self._position_x == 0.0):
+            self._position_x = 0.5 * _x * (time.time() - self._last_time)**2
+        else:
+            self._position_x += 0.5 * _x * (time.time() - self._last_time)**2
+
+        if (self._position_y == 0.0):
+            self._position_y = 0.5 * _y * (time.time() - self._last_time)**2
+        else:
+            self._position_y += 0.5 * _y * (time.time() - self._last_time)**2
+
+        if (self._position_z == 0.0):
+            self._position_z = 0.5 * _z * (time.time() - self._last_time)**2
+        else:
+            self._position_z += 0.5 * _z * (time.time() - self._last_time)**2
+
+        # if (self._position_x == 0.0 or self._position_y == 0.0 or self._position_z == 0.0):
+        #     self._position_x = 0.5 * _x * (time.time() - self._last_time)**2
+        #     self._position_y = 0.5 * _y * (time.time() - self._last_time)**2
+        #     self._position_z = 0.5 * _z * (time.time() - self._last_time)**2
+            
+        # self._position_x *= 0.5 * _x * (time.time() - self._last_time)**2
+        # self._position_y *= 0.5 * _y * (time.time() - self._last_time)**2
+        # self._position_z *= 0.5 * _z * (time.time() - self._last_time)**2
 
         # accumulate input
-        _new_mat = avango.gua.make_trans_mat(_distance_x, _distance_y, _distance_z) * self.sf_mat.value
+        _new_mat = avango.gua.make_trans_mat(self._position_x, self._position_y, self._position_z) * self.sf_mat.value
 
         # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
