@@ -475,16 +475,24 @@ class IsotonicRateControlManipulation(Manipulation):
         # pass
         ## TODO: add code
         self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
+        self._last_time = 0.0
+        self._position_x = 0.0
+        self._position_y = 0.0
+        self._position_z = 0.0
 
 
 
 class IsotonicAccelerationControlManipulation(Manipulation):
     
-    _last_time = 0.0
-    _scaling_factor = 0.001
+    # _begin_time = 0.0
+    # _elapsed_time = 0.0
+    _scaling_factor = 0.0001
     _position_x = 0.0
     _position_y = 0.0
     _position_z = 0.0
+    _velocity_x = 0.0
+    _velocity_y = 0.0
+    _velocity_z = 0.0
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "isotonic-acceleration-control"
@@ -505,33 +513,26 @@ class IsotonicAccelerationControlManipulation(Manipulation):
         _z = self.mf_dof.value[2] * self._scaling_factor
 
         # compute elapsed time
-        if (self._last_time == 0.0): # first run
-            self._last_time = time.time()
-            pass
+        # if (self._begin_time == 0.0): # first run
+        #     self._begin_time = time.time()
+        #     pass
 
-        if (self._position_x == 0.0):
-            self._position_x = 0.5 * _x * (time.time() - self._last_time)**2
-        else:
-            self._position_x += 0.5 * _x * (time.time() - self._last_time)**2
+        # if self._begin_time != 0.0:
+        #     self._elapsed_time = time.time() - self._begin_time
+        #     print(self._elapsed_time)
 
-        if (self._position_y == 0.0):
-            self._position_y = 0.5 * _y * (time.time() - self._last_time)**2
-        else:
-            self._position_y += 0.5 * _y * (time.time() - self._last_time)**2
+        self._velocity_x += _x #* self._elapsed_time
+        self._velocity_y += _y #* self._elapsed_time
+        self._velocity_z += _z #* self._elapsed_time
 
-        if (self._position_z == 0.0):
-            self._position_z = 0.5 * _z * (time.time() - self._last_time)**2
-        else:
-            self._position_z += 0.5 * _z * (time.time() - self._last_time)**2
+        # formula from the slide didn't work
+        # self._position_x += 0.5 * self._velocity_x * self._elapsed_time**2.0
+        # self._position_y += 0.5 * self._velocity_y * self._elapsed_time**2.0
+        # self._position_z += 0.5 * self._velocity_z * self._elapsed_time**2.0
 
-        # if (self._position_x == 0.0 or self._position_y == 0.0 or self._position_z == 0.0):
-        #     self._position_x = 0.5 * _x * (time.time() - self._last_time)**2
-        #     self._position_y = 0.5 * _y * (time.time() - self._last_time)**2
-        #     self._position_z = 0.5 * _z * (time.time() - self._last_time)**2
-            
-        # self._position_x *= 0.5 * _x * (time.time() - self._last_time)**2
-        # self._position_y *= 0.5 * _y * (time.time() - self._last_time)**2
-        # self._position_z *= 0.5 * _z * (time.time() - self._last_time)**2
+        self._position_x += self._velocity_x
+        self._position_y += self._velocity_y
+        self._position_z += self._velocity_z
 
         # accumulate input
         _new_mat = avango.gua.make_trans_mat(self._position_x, self._position_y, self._position_z) * self.sf_mat.value
@@ -546,6 +547,15 @@ class IsotonicAccelerationControlManipulation(Manipulation):
         # pass
         ## TODO: add code
         self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
+        self._velocity_x = 0.0
+        self._velocity_y = 0.0
+        self._velocity_z = 0.0
+        self._position_x = 0.0
+        self._position_y = 0.0
+        self._position_z = 0.0
+        self._begin_time = 0.0
+        self._elapsed_time = 0.0
+
 ########################## End of Exercise 4.2
     
 
@@ -647,8 +657,15 @@ class ElasticRateControlManipulation(Manipulation):
 
 class ElasticAccelerationControlManipulation(Manipulation):
 
-    _last_time = 0.0
-    _scaling_factor = 0.01
+    _begin_time = 0.0
+    _elapsed_time = 0.0
+    _scaling_factor = 0.000001
+    _position_x = 0.0
+    _position_y = 0.0
+    _position_z = 0.0
+    _velocity_x = 0.0
+    _velocity_y = 0.0
+    _velocity_z = 0.0
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "elastic-acceleration-control"
@@ -662,21 +679,20 @@ class ElasticAccelerationControlManipulation(Manipulation):
         pass
         # TODO: add code
         # mouse input is the acceleration
-        _x = self.mf_dof.value[0] * self._scaling_factor
-        _y = self.mf_dof.value[1] * self._scaling_factor
-        _z = self.mf_dof.value[2] * self._scaling_factor
+        _x = self.mf_dof.value[0]
+        _y = self.mf_dof.value[1]
+        _z = self.mf_dof.value[2] 
 
-        # compute elapsed time
-        if (self._last_time == 0.0): # first run
-            self._last_time = time.time()
-            pass
+        self._velocity_x += _x #* self._elapsed_time
+        self._velocity_y += _y #* self._elapsed_time
+        self._velocity_z += _z #* self._elapsed_time
 
-        _distance_x = 0.5 * _x * (time.time() - self._last_time)**2
-        _distance_y = 0.5 * _y * (time.time() - self._last_time)**2
-        _distance_z = 0.5 * _z * (time.time() - self._last_time)**2
+        self._position_x += self._velocity_x * self._scaling_factor
+        self._position_y += self._velocity_y * self._scaling_factor
+        self._position_z += self._velocity_z * self._scaling_factor
 
         # accumulate input
-        _new_mat = avango.gua.make_trans_mat(_distance_x, _distance_y, _distance_z) * self.sf_mat.value
+        _new_mat = avango.gua.make_trans_mat(self._position_x, self._position_y, self._position_z) * self.sf_mat.value
 
         # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
@@ -688,5 +704,13 @@ class ElasticAccelerationControlManipulation(Manipulation):
         # pass
         ## TODO: add code
         self.sf_mat.value = avango.gua.make_identity_mat() # snap hand back to screen center
+        self._velocity_x = 0.0
+        self._velocity_y = 0.0
+        self._velocity_z = 0.0
+        self._position_x = 0.0
+        self._position_y = 0.0
+        self._position_z = 0.0
+        self._begin_time = 0.0
+        self._elapsed_time = 0.0
 
 ########################## End of Exercise 4.3
