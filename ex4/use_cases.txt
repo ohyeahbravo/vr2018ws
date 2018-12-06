@@ -1,3 +1,6 @@
+# Hiyeon Kim, 118654
+# Lars Meyer, 114719
+
 Isotonic Position Control:
 - just like positioning objects in the real world in all directions (pick up, move, place), for example, by dragging
 - mouse cursor in every operating system
