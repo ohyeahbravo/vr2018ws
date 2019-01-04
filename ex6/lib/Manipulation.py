@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# Hiyeon Kim, 118654
+# Lars Meyer, 114719
+
 ### import guacamole libraries ###
 import avango
 import avango.gua
@@ -387,6 +390,9 @@ class Ray(ManipulationTechnique):
 
 class DepthRay(ManipulationTechnique):
 
+    # Keep the old list of intersected objects, to discolor them later
+    mf_old_pick_result = None
+
     ## constructor
     def __init__(self):
         self.super(DepthRay).__init__()
@@ -409,20 +415,110 @@ class DepthRay(ManipulationTechnique):
         
         ### resources ###
 
-        ## To-Do: init (geometry) nodes here
-        
+        _loader = avango.gua.nodes.TriMeshLoader()
+
+        self.ray_geometry = _loader.create_geometry_from_file("ray_geometry", "data/objects/cylinder.obj", avango.gua.LoaderFlags.DEFAULTS)
+        self.ray_geometry.Transform.value = \
+            avango.gua.make_trans_mat(0.0,0.0,self.ray_length * -0.5) * \
+            avango.gua.make_scale_mat(self.ray_thickness, self.ray_thickness, self.ray_length)
+        self.ray_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,1.0))
+        self.pointer_node.Children.value.append(self.ray_geometry)
+
+
+        self.marker_geometry = _loader.create_geometry_from_file("marker_geometry", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS)
+        self.marker_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(0.7,0.6,1.0,1.0))
+        self.pointer_node.Children.value.append(self.marker_geometry)
 
         ### set initial states ###
         self.enable(False)
     
+
+    ### functions ###
+    def enable(self, BOOL): # extend respective base-class function
+        ManipulationTechnique.enable(self, BOOL) # call base-class function
+
+        if self.enable_flag == False:
+            self.marker_geometry.Tags.value = ["invisible"] # set intersection point invisible
+
+    def update_ray_visualization(self, PICK_WORLD_POS = None, PICK_DISTANCE = 0.0):
+        self.ray_geometry.Transform.value = \
+            avango.gua.make_trans_mat(0.0,0.0,self.ray_length * -0.5) * \
+            avango.gua.make_scale_mat(self.ray_thickness, self.ray_thickness, self.ray_length)
+
+        self.marker_geometry.Tags.value = [] # set intersection point visible
+        # move marker along ray corresponding to angle
+        self.marker_geometry.Transform.value = avango.gua.make_trans_mat(0.0,0.0, min(0.0,-PICK_DISTANCE)) * avango.gua.make_scale_mat(self.depth_marker_size)
+
+    def selection(self):
+        if len(self.mf_pick_result.value) > 0: # intersection found
+            old_dist = 0.0
+            for item in self.mf_pick_result.value:
+                # calculate distance of marker to pointer origin
+                marker_dist = self.marker_geometry.WorldTransform.value.get_translate().distance_to(self.pointer_node.WorldTransform.value.get_translate())
+                # calculate distance of object to marker
+                new_dist = abs(marker_dist - (item.Distance.value * self.ray_length))
+                if old_dist == 0.0:
+                    old_dist = new_dist
+                if new_dist <= old_dist:
+                    old_dist = new_dist
+                    self.pick_result = item # will be the closest object to the marker at the end of the loop
+
+        else: # nothing hit
+            self.pick_result = None
+
+        # disable previous node highlighting
+        if self.mf_old_pick_result is not None:
+            for item in self.mf_old_pick_result.value:
+                if item not in self.mf_pick_result.value:
+                    parent = item.Object.value.Parent.value
+                    for _child_node in parent.Children.value:
+                        if _child_node.get_type() == 'av::gua::TriMeshNode':
+                            _child_node.Material.value.set_uniform("enable_color_override", False)
+
+
+        if self.pick_result is not None: # something was hit
+            self.selected_node = self.pick_result.Object.value # get intersected geometry node
+            self.selected_node = self.selected_node.Parent.value # take the parent node of the geomtry node (the whole object)
+
+        else:
+            self.selected_node = None
+
+        ## enable node highlighting
+        if self.selected_node is not None:
+            # green highlighting
+            for item in self.mf_pick_result.value:
+                if item != self.pick_result:
+                    parent = item.Object.value.Parent.value
+                    for _child_node in parent.Children.value:
+                        if _child_node.get_type() == 'av::gua::TriMeshNode':
+                            _child_node.Material.value.set_uniform("enable_color_override", True)
+                            _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(0.0,1.0,0.0,0.3)) # 30% color override
+            # red highlighting
+            for _child_node in self.selected_node.Children.value:
+                if _child_node.get_type() == 'av::gua::TriMeshNode':
+                    _child_node.Material.value.set_uniform("enable_color_override", True)
+                    _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override\
+
 
     ### callback functions ###
     def evaluate(self): # implement respective base-class function
         if self.enable_flag == False:
             return
 
-        ## To-Do: implement depth ray technique here
+        ## calc ray intersection
+        ManipulationTechnique.update_intersection(self, PICK_MAT = self.pointer_node.WorldTransform.value, PICK_LENGTH = self.ray_length) # call base-class function
+
+        angle = ManipulationTechnique.get_roll_angle(self, self.pointer_node.Transform.value)
+
+        self.update_ray_visualization(PICK_DISTANCE = (angle/180.0) * self.ray_length) # move marker along ray
+
+        ## update object selection
+        self.selection()
         
+        ## possibly perform object dragging
+        ManipulationTechnique.dragging(self) # call base-class function
+
+        self.mf_old_pick_result = self.mf_pick_result # keep track of previous intersection list
 
 
 class GoGo(ManipulationTechnique):
