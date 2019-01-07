@@ -14,7 +14,6 @@ import avango.daemon
 import math
 import sys
 
-
 class ManipulationManager(avango.script.Script):
 
     ## input fields
@@ -540,21 +539,19 @@ class GoGo(ManipulationTechnique):
 
         ### external references ###
         self.HEAD_NODE = HEAD_NODE
-        
 
         ### parameters ###  
         self.intersection_point_size = 0.03 # in meter
         self.gogo_threshold = 0.35 # in meter
-
+        self.k = 0.15
 
         ### resources ###
- 
-        ## To-Do: init (geometry) nodes here
- 
+        _loader = avango.gua.nodes.TriMeshLoader()
+        self.hand_geometry = _loader.create_geometry_from_file("hand_geometry", "data/objects/hand.obj", avango.gua.LoaderFlags.DEFAULTS)
+        self.pointer_node.Children.value.append(self.hand_geometry)
+
         ### set initial states ###
         self.enable(False)
-
-
 
     ### callback functions ###
     def evaluate(self): # implement respective base-class function
@@ -562,8 +559,46 @@ class GoGo(ManipulationTechnique):
             return
 
         ## To-Do: implement Go-Go technique here
+        # print("Head: ")
+        # print(self.HEAD_NODE.WorldTransform.value.get_translate())
 
-            
+        # print("Hand: ")
+        # print(self.pointer_node.WorldTransform.value.get_translate())
+
+        # print(self.HEAD_NODE.WorldTransform.value.get_translate() - self.pointer_node.WorldTransform.value.get_translate())
+
+        body_origin = self.HEAD_NODE.WorldTransform.value.get_translate()
+        body_origin.y -= 0.15
+        body_origin.z -= 0.7
+
+        # Rr = self.pointer_node.WorldTransform.value.get_translate().distance_to(body_origin)
+        Rx = self.pointer_node.WorldTransform.value.get_translate().x
+        Ry = self.pointer_node.WorldTransform.value.get_translate().y
+        Rz = -(body_origin.z - self.pointer_node.WorldTransform.value.get_translate().z)
+        Rr = avango.gua.Vec3(Rx, Ry, Rz)
+        print("Rr:")
+        print(Rr)
+        head, pitch, roll = get_euler_angles(self.pointer_node.WorldTransform.value)
+        if (Rz < self.gogo_threshold):
+            print("GOGO Mode")
+            # print("Distance: ")
+            # print(self.pointer_node.WorldTransform.value.get_translate().distance_to(body_origin))
+            # scaled_input = self.pointer_node.WorldTransform.value.get_translate()
+            scaled_input = Rr
+            # scaled_input.x = self.pointer_node.WorldTransform.value.get_translate().x + 0.5*(self.pointer_node.WorldTransform.value.get_translate().x - self.gogo_threshold)**2
+            # scaled_input.y = self.pointer_node.WorldTransform.value.get_translate().y + 0.5*(self.pointer_node.WorldTransform.value.get_translate().y - self.gogo_threshold)**2
+            # print((self.pointer_node.WorldTransform.value.get_translate().z*100) - (self.gogo_threshold*100))
+            # scaled_input.z = self.pointer_node.WorldTransform.value.get_translate().z - (((self.pointer_node.WorldTransform.value.get_translate().z*100) - (self.gogo_threshold*100))**2) * 0.01 * self.k
+            scaled_input.z = Rr.z - ((Rr.z * 100 - (self.gogo_threshold*100))**2) * 0.01 * self.k
+            self.hand_geometry.WorldTransform.value = avango.gua.make_rot_mat(self.pointer_node.WorldTransform.value.get_rotate()) * avango.gua.make_trans_mat(scaled_input)
+        else:
+            # print("not a gogo mode")
+            self.hand_geometry.WorldTransform.value = avango.gua.make_rot_mat(self.pointer_node.WorldTransform.value.get_rotate()) * avango.gua.make_trans_mat(Rr)
+            # self.hand_geometry.WorldTransform.value = avango.gua.make_trans_mat()
+
+        ManipulationTechnique.update_intersection(self, PICK_MAT = self.hand_geometry.WorldTransform.value, PICK_LENGTH = self.intersection_point_size) # call base-class function
+        ManipulationTechnique.selection(self)
+        ManipulationTechnique.dragging(self)
 
 class VirtualHand(ManipulationTechnique):
 
@@ -604,3 +639,62 @@ class VirtualHand(ManipulationTechnique):
 
         ## To-Do: implement Virtual Hand (with PRISM filter) technique here
         
+## Converts a rotation matrix to the Euler angles head, pitch and roll.
+# @param MATRIX The rotation matrix to be converted.
+def get_euler_angles(MATRIX):
+
+    quat = MATRIX.get_rotate()
+    qx = quat.x
+    qy = quat.y
+    qz = quat.z
+    qw = quat.w
+
+    sqx = qx * qx
+    sqy = qy * qy
+    sqz = qz * qz
+    sqw = qw * qw
+    
+    unit = sqx + sqy + sqz + sqw # if normalised is one, otherwise is correction factor
+    test = (qx * qy) + (qz * qw)
+
+    if test > 1:
+        head = 0.0
+        roll = 0.0
+        pitch = 0.0
+
+    if test > (0.49999 * unit): # singularity at north pole
+        head = 2.0 * math.atan2(qx,qw)
+        roll = math.pi/2.0
+        pitch = 0.0
+    elif test < (-0.49999 * unit): # singularity at south pole
+        head = -2.0 * math.atan2(qx,qw)
+        roll = math.pi/-2.0
+        pitch = 0.0
+    else:
+        #print("euler", 2.0 * test)
+        head = math.atan2(2.0 * qy * qw - 2.0 * qx * qz, 1.0 - 2.0 * sqy - 2.0 * sqz)
+        roll = math.asin(2.0 * test)
+        pitch = math.atan2(2.0 * qx * qw - 2.0 * qy * qz, 1.0 - 2.0 * sqx - 2.0 * sqz)
+
+    if head < 0.0:
+        head += 2.0 * math.pi
+
+    if pitch < 0:
+        pitch += 2 * math.pi
+    
+    if roll < 0:
+        roll += 2 * math.pi
+       
+    head = math.degrees(head)
+    if head > 180.0:
+        head = -(360.0 - head)
+
+    pitch = math.degrees(pitch)
+    if pitch > 180.0:
+        pitch = -(360.0 - pitch)
+
+    roll = math.degrees(roll)
+    if roll > 180.0:
+        roll = -(360.0 - roll)
+
+    return head, pitch, roll
