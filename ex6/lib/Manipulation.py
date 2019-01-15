@@ -131,13 +131,6 @@ class ManipulationTechnique(avango.script.Script):
         self.white_list = []   
         self.black_list = ["invisible"]
 
-        #self.pick_options = avango.gua.PickingOptions.PICK_ONLY_FIRST_OBJECT \
-        #                    | avango.gua.PickingOptions.PICK_ONLY_FIRST_FACE \
-        #                    | avango.gua.PickingOptions.GET_POSITIONS \
-        #                    | avango.gua.PickingOptions.GET_NORMALS \
-        #                    | avango.gua.PickingOptions.GET_WORLD_POSITIONS \
-        #                    | avango.gua.PickingOptions.GET_WORLD_NORMALS
-
         self.pick_options = avango.gua.PickingOptions.PICK_ONLY_FIRST_FACE \
                             | avango.gua.PickingOptions.GET_POSITIONS \
                             | avango.gua.PickingOptions.GET_NORMALS \
@@ -206,13 +199,11 @@ class ManipulationTechnique(avango.script.Script):
         
         _side_vec = avango.gua.make_rot_mat(MAT4.get_rotate()) * avango.gua.Vec3(1.0,0.0,0.0)    
         _side_vec = avango.gua.Vec3(_side_vec.x, _side_vec.y, _side_vec.z) # cast to Vec3
-        #print(_ref_side_vec, _side_vec)
 
         _axis = _ref_side_vec.cross(_side_vec)
         _axis.normalize()
     
         _angle = math.degrees(math.acos(min(max(_ref_side_vec.dot(_side_vec), -1.0), 1.0)))
-        #print(_angle)
         
         if _side_vec.y > 0.0: # simulate rotation direction
             _angle *= -1.0
@@ -377,8 +368,6 @@ class Ray(ManipulationTechnique):
             _pick_world_pos = self.pick_result.WorldPosition.value # pick position in world coordinate system
     
             _distance = self.pick_result.Distance.value * self.ray_length # pick distance in ray coordinate system
-    
-            #print(_node, _pick_pos, _pick_world_pos, _distance)
         
             self.update_ray_visualization(PICK_WORLD_POS = _pick_world_pos, PICK_DISTANCE = _distance)
 
@@ -554,51 +543,43 @@ class GoGo(ManipulationTechnique):
         ### set initial states ###
         self.enable(False)
 
+    # dragging offset has to be calculated from the actual hand geometry position for correct rotation
+    def start_dragging(self, NODE):
+        self.dragged_node = NODE        
+        self.dragging_offset_mat = avango.gua.make_inverse_mat(self.hand_geometry.WorldTransform.value) * self.dragged_node.WorldTransform.value # object transformation in pointer coordinate system
+
+    def dragging(self):
+        if self.dragged_node is not None: # object to drag
+            _new_mat = self.hand_geometry.WorldTransform.value * self.dragging_offset_mat # new object position in world coodinates
+            _new_mat = avango.gua.make_inverse_mat(self.dragged_node.Parent.value.WorldTransform.value) * _new_mat # transform new object matrix from global to local space
+        
+            self.dragged_node.Transform.value = _new_mat
+
     ### callback functions ###
     def evaluate(self): # implement respective base-class function
         if self.enable_flag == False:
             return
 
-        ## To-Do: implement Go-Go technique here
-        # print("Head: ")
-        # print(self.HEAD_NODE.WorldTransform.value.get_translate())
-
-        # print("Hand: ")
-        # print(self.pointer_node.WorldTransform.value.get_translate())
-
-        # print(self.HEAD_NODE.WorldTransform.value.get_translate() - self.pointer_node.WorldTransform.value.get_translate())
-
         body_origin = self.HEAD_NODE.WorldTransform.value.get_translate()
         body_origin.y -= 0.15
         body_origin.z -= 0.7
 
-        # Rr = self.pointer_node.WorldTransform.value.get_translate().distance_to(body_origin)
         Rx = self.pointer_node.WorldTransform.value.get_translate().x
         Ry = self.pointer_node.WorldTransform.value.get_translate().y
         Rz = -(body_origin.z - self.pointer_node.WorldTransform.value.get_translate().z)
         Rr = avango.gua.Vec3(Rx, Ry, Rz)
-        print("Rr:")
-        print(Rr)
+
         if (Rz < self.gogo_threshold):
-            print("GOGO Mode")
-            # print("Distance: ")
-            # print(self.pointer_node.WorldTransform.value.get_translate().distance_to(body_origin))
-            # scaled_input = self.pointer_node.WorldTransform.value.get_translate()
             scaled_input = Rr
-            # scaled_input.x = self.pointer_node.WorldTransform.value.get_translate().x + 0.5*(self.pointer_node.WorldTransform.value.get_translate().x - self.gogo_threshold)**2
-            # scaled_input.y = self.pointer_node.WorldTransform.value.get_translate().y + 0.5*(self.pointer_node.WorldTransform.value.get_translate().y - self.gogo_threshold)**2
-            # print((self.pointer_node.WorldTransform.value.get_translate().z*100) - (self.gogo_threshold*100))
-            # scaled_input.z = self.pointer_node.WorldTransform.value.get_translate().z - (((self.pointer_node.WorldTransform.value.get_translate().z*100) - (self.gogo_threshold*100))**2) * 0.01 * self.k
             scaled_input.z = Rr.z - ((Rr.z * 100 - (self.gogo_threshold*100))**2) * 0.01 * self.k
-            self.hand_geometry.WorldTransform.value = avango.gua.make_rot_mat(self.pointer_node.WorldTransform.value.get_rotate()) * avango.gua.make_trans_mat(scaled_input)
+            self.hand_geometry.WorldTransform.value = avango.gua.make_trans_mat(scaled_input) * avango.gua.make_rot_mat(self.pointer_node.WorldTransform.value.get_rotate())
+
         else:
-            # print("not a gogo mode")
-            self.hand_geometry.WorldTransform.value = avango.gua.make_rot_mat(self.pointer_node.WorldTransform.value.get_rotate()) * avango.gua.make_trans_mat(Rr)
-            # self.hand_geometry.WorldTransform.value = avango.gua.make_trans_mat()
+            self.hand_geometry.WorldTransform.value = avango.gua.make_trans_mat(Rr) * avango.gua.make_rot_mat(self.pointer_node.WorldTransform.value.get_rotate())
 
         ManipulationTechnique.update_intersection(self, PICK_MAT = self.hand_geometry.WorldTransform.value, PICK_LENGTH = self.intersection_point_size) # call base-class function
         ManipulationTechnique.selection(self)
-        ManipulationTechnique.dragging(self)
+        self.dragging()
 
 class VirtualHand(ManipulationTechnique):
 
@@ -619,9 +600,10 @@ class VirtualHand(ManipulationTechnique):
         ### parameters ###
         self.intersection_point_size = 0.03 # in meter
 
-        self.min_vel = 0.01# / 60.0 # in meter/sec
-        self.sc_vel = 0.15# / 60.0 # in meter/sec
-        self.max_vel = 0.25# / 60.0 # in meter/sec
+        # adjusted thresholds
+        self.min_vel = 0.01
+        self.sc_vel = 0.20
+        self.max_vel = 0.30
 
         self.last_time = time.clock()
         self.last_pos  = self.pointer_node.WorldTransform.value.get_translate()
@@ -631,140 +613,117 @@ class VirtualHand(ManipulationTechnique):
         _loader = avango.gua.nodes.TriMeshLoader()
         self.hand_geometry = _loader.create_geometry_from_file("hand_geometry", "data/objects/hand.obj", avango.gua.LoaderFlags.DEFAULTS)
         self.hand_geometry.WorldTransform.value = self.pointer_node.WorldTransform.value
-        # self.pointer_node.Children.value.append(self.hand_geometry)
         SCENEGRAPH.Root.value.Children.value.append(self.hand_geometry)
         self.offset = avango.gua.Vec3()
-        self.recovery_started = avango.gua.Vec3()
-        self.FULL_RECOVERY = [False, False, False]
+        self.offset_recovery_with_the_hand = [False, False, False]
+
+
+        self.actual_geometry = _loader.create_geometry_from_file("sphere_geometry", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS)
+        self.actual_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,0.0,1.0,1.0))
+        self.actual_geometry.Transform.value = avango.gua.make_scale_mat(0.03)
+        self.pointer_node.Children.value.append(self.actual_geometry)
         
         ### set initial states ###
         self.enable(False)
 
+    # dragging offset has to be calculated from the actual hand geometry position for correct rotation
+    def start_dragging(self, NODE):
+        self.dragged_node = NODE        
+        self.dragging_offset_mat = avango.gua.make_inverse_mat(self.hand_geometry.WorldTransform.value) * self.dragged_node.WorldTransform.value # object transformation in pointer coordinate system
+
+    def dragging(self):
+        if self.dragged_node is not None: # object to drag
+            _new_mat = self.hand_geometry.WorldTransform.value * self.dragging_offset_mat # new object position in world coodinates
+            _new_mat = avango.gua.make_inverse_mat(self.dragged_node.Parent.value.WorldTransform.value) * _new_mat # transform new object matrix from global to local space
+        
+            self.dragged_node.Transform.value = _new_mat
 
     ### callback functions ###
     def evaluate(self): # implement respective base-class function
         if self.enable_flag == False:
             return
 
-        ## To-Do: implement Virtual Hand (with PRISM filter) technique here
-        # frametime = time.clock() - self.last_time
-        # print("Frametime: ")
-        # print(frametime)
+        frametime = time.clock() - self.last_time
         pos_diff = self.pointer_node.WorldTransform.value.get_translate() - self.last_pos
-        # print(pos_diff)
 
-        if (time.clock() - self.last_time > 0.5):
-            pos_diff_half_a_second = self.pointer_node.WorldTransform.value.get_translate() - self.pos_half_a_second_ago
-            real_speed = avango.gua.Vec3()
-            real_speed.x = abs(pos_diff_half_a_second.x / 0.5)
-            real_speed.y = abs(pos_diff_half_a_second.y / 0.5)
-            real_speed.z = abs(pos_diff_half_a_second.z / 0.5)
+        real_speed = avango.gua.Vec3()
+        real_speed.x = abs(pos_diff.x / frametime)
+        real_speed.y = abs(pos_diff.y / frametime)
+        real_speed.z = abs(pos_diff.z / frametime)
 
-            # print(real_speed)
 
-            if (real_speed.x <= self.min_vel):
-                self.K.x = 0.0
-            elif (real_speed.x < self.sc_vel):
-                self.K.x = (real_speed.x / self.sc_vel)
-            elif (real_speed.x < self.max_vel):
+        if (real_speed.x <= self.min_vel):
+            self.K.x = 0.0
+        elif (real_speed.x < self.sc_vel):
+            self.K.x = (real_speed.x / self.sc_vel)
+        elif (real_speed.x < self.max_vel):
+            self.K.x = 1.0
+        elif (real_speed.x >= self.max_vel): 
+            if (math.copysign(1, pos_diff.x) != math.copysign(1, self.offset.x)):
+                self.offset_recovery_with_the_hand[0] = True
+            elif (abs(self.offset.x) > 0.01):
+                self.K.x = 1.5
+            else:
                 self.K.x = 1.0
-            # 20 percent offset recovery
-            elif (self.recovery_started.x == 0.0):
-                self.recovery_started.x = time.clock()
-                offset_recovery_velocity = (0.2 * abs(self.offset.x)) / 0.5
-                self.K.x = offset_recovery_velocity / real_speed.x
-            # 50 percent offset recovery
-            elif (time.clock() - self.recovery_started.x >= 0.5):
-                offset_recovery_velocity = (0.5 * abs(self.offset.x)) / 0.5
-                self.K.x = offset_recovery_velocity / real_speed.x
-            # full offset recovery
-            elif (time.clock() - self.recovery_started.x >= 1.0):
-                self.FULL_RECOVERY[0] = True
-                self.hand_geometry.WorldTransform.value = \
-                    avango.gua.make_trans_mat(self.pointer_node.WorldTransform.value.get_translate().x, \
-                        self.hand_geometry.WorldTransform.value.get_translate().y, \
-                        self.hand_geometry.WorldTransform.get_translate().z)
-                self.recovery_started.x = 0.0
 
-            if (real_speed.y <= self.min_vel):
-                self.K.y = 0.0
-            elif (real_speed.y < self.sc_vel):
-                self.K.y = (real_speed.y / self.sc_vel)
-            elif (real_speed.y < self.max_vel):
+        if (real_speed.y <= self.min_vel):
+            self.K.y = 0.0
+        elif (real_speed.y < self.sc_vel):
+            self.K.y = (real_speed.y / self.sc_vel)
+        elif (real_speed.y < self.max_vel):
+            self.K.y = 1.0
+        elif (real_speed.y >= self.max_vel): 
+            if (math.copysign(1, pos_diff.y) != math.copysign(1, self.offset.y)):
+                self.offset_recovery_with_the_hand[1] = True
+            elif (abs(self.offset.y) > 0.01):
+                self.K.y = 1.5
+            else:
                 self.K.y = 1.0
-            # 20 percent offset recovery
-            elif (self.recovery_started.y == 0.0):
-                self.recovery_started.y = time.clock()
-                offset_recovery_velocity = (0.2 * abs(self.offset.y)) / 0.5
-                self.K.y = offset_recovery_velocity / real_speed.y
-            # 50 percent offset recovery
-            elif (time.clock() - self.recovery_started.y >= 0.5):
-                offset_recovery_velocity = (0.5 * abs(self.offset.y)) / 0.5
-                self.K.y = offset_recovery_velocity / real_speed.y
-            # full offset recovery
-            elif (time.clock() - self.recovery_started.y >= 1.0):
-                self.FULL_RECOVERY[1] = True
-                self.hand_geometry.WorldTransform.value = \
-                    avango.gua.make_trans_mat(self.hand_geometry.WorldTransform.value.get_translate().x, \
-                        self.pointer_node.WorldTransform.value.get_translate().y, \
-                        self.hand_geometry.WorldTransform.get_translate().z)
-                self.recovery_started.y = 0.0
 
-            if (real_speed.z <= self.min_vel):
-                self.K.z = 0.0
-            elif (real_speed.z < self.sc_vel):
-                self.K.z = (real_speed.z / self.sc_vel)
-            elif (real_speed.z < self.max_vel):
+        if (real_speed.z <= self.min_vel):
+            self.K.z = 0.0
+        elif (real_speed.z < self.sc_vel):
+            self.K.z = (real_speed.z / self.sc_vel)
+        elif (real_speed.z < self.max_vel):
+            self.K.z = 1.0
+        elif (real_speed.z >= self.max_vel): 
+            if (math.copysign(1, pos_diff.z) != math.copysign(1, self.offset.z)):
+                self.offset_recovery_with_the_hand[2] = True
+            elif (abs(self.offset.z) > 0.01):
+                self.K.z = 1.5
+            else:
                 self.K.z = 1.0
-            # 20 percent offset recovery
-            elif (self.recovery_started.z == 0.0):
-                self.recovery_started.z = time.clock()
-                offset_recovery_velocity = (0.2 * abs(self.offset.z)) / 0.5
-                self.K.z = offset_recovery_velocity / real_speed.z
-            # 50 percent offset recovery
-            elif (time.clock() - self.recovery_started.z >= 0.5):
-                offset_recovery_velocity = (0.5 * abs(self.offset.z)) / 0.5
-                self.K.z = offset_recovery_velocity / real_speed.z
-            # full offset recovery
-            elif (time.clock() - self.recovery_started.z >= 1.0):
-                self.FULL_RECOVERY[2] = True
-                self.hand_geometry.WorldTransform.value = \
-                    avango.gua.make_trans_mat(self.hand_geometry.WorldTransform.value.get_translate().x, \
-                        self.hand_geometry.WorldTransform.value.get_translate().y, \
-                        self.pointer_node.WorldTransform.get_translate().z)
-                self.recovery_started.z = 0.0
 
-            self.last_time = time.clock()
-            self.pos_half_a_second_ago = self.pointer_node.WorldTransform.value.get_translate()
+        self.last_time = time.clock()
 
-        # print(self.K)
+        trans_value = avango.gua.Vec3()
 
-        hand_pos = self.hand_geometry.WorldTransform.value.get_translate()
-        if (self.FULL_RECOVERY[0] == True):
-            self.FULL_RECOVERY[0] = False
+        if (self.offset_recovery_with_the_hand[0] == True):
+            self.offset_recovery_with_the_hand[0] = False
         else:
-            self.hand_geometry.WorldTransform.value *= avango.gua.make_trans_mat(pos_diff.x * self.K.x, 0.0, 0.0)
+            trans_value.x = pos_diff.x * self.K.x
             
-        if (self.FULL_RECOVERY[1] == True):
-            self.FULL_RECOVERY[1] = False
+        if (self.offset_recovery_with_the_hand[1] == True):
+            self.offset_recovery_with_the_hand[1] = False
         else:
-            self.hand_geometry.WorldTransform.value *= avango.gua.make_trans_mat(0.0, pos_diff.y * self.K.y, 0.0)
+            trans_value.y = pos_diff.y * self.K.y
             
-        if (self.FULL_RECOVERY[2] == True):
-            self.FULL_RECOVERY[2] = False
+        if (self.offset_recovery_with_the_hand[2] == True):
+            self.offset_recovery_with_the_hand[2] = False
         else:
-            self.hand_geometry.WorldTransform.value *= avango.gua.make_trans_mat(0.0, 0.0, pos_diff.z * self.K.z)            
+            trans_value.z = pos_diff.z * self.K.z
+
+        trans_value += self.hand_geometry.WorldTransform.value.get_translate()
+        self.hand_geometry.WorldTransform.value = avango.gua.make_trans_mat(trans_value.x, trans_value.y, trans_value.z) \
+                                                    * avango.gua.make_rot_mat(self.pointer_node.WorldTransform.value.get_rotate())
             
         self.offset.x = self.pointer_node.WorldTransform.value.get_translate().x - self.hand_geometry.WorldTransform.value.get_translate().x
         self.offset.y = self.pointer_node.WorldTransform.value.get_translate().y - self.hand_geometry.WorldTransform.value.get_translate().y
         self.offset.z = self.pointer_node.WorldTransform.value.get_translate().z - self.hand_geometry.WorldTransform.value.get_translate().z
-        
-        print("Offset: ")
-        print(self.offset)
 
         self.last_pos = self.pointer_node.WorldTransform.value.get_translate()
 
         ManipulationTechnique.update_intersection(self, PICK_MAT = self.hand_geometry.WorldTransform.value, PICK_LENGTH = self.intersection_point_size) # call base-class function
         ManipulationTechnique.selection(self)
-        ManipulationTechnique.dragging(self)
+        self.dragging()
 
