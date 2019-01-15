@@ -540,6 +540,34 @@ class GoGo(ManipulationTechnique):
         self.hand_geometry = _loader.create_geometry_from_file("hand_geometry", "data/objects/hand.obj", avango.gua.LoaderFlags.DEFAULTS)
         self.pointer_node.Children.value.append(self.hand_geometry)
 
+        # Import the necessary packages and modules
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        def tf(x):
+            if (x < self.gogo_threshold):
+                return x
+            else:
+                return (x + ((x * 100 - (self.gogo_threshold*100))**2) * 0.01 * self.k)
+
+        # Prepare the data
+        x = np.arange(0., 1., 0.01)
+        y = []
+
+        for i in range(len(x)):
+            y.append(tf(x[i]))
+
+        # Plot the data
+        plt.plot(x, y, label='GoGo Transfer Function')
+        plt.xlabel('real hand distance (m)')
+        plt.ylabel('virtual hand distance (m)')
+        # Add a legend
+        plt.legend()
+
+        plt.savefig('gogo.png')
+        # # Show the plot
+        # plt.show()
+
         ### set initial states ###
         self.enable(False)
 
