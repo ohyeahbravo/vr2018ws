@@ -363,7 +363,9 @@ class TeleportNavigation(NavigationTechnique):
 
         ### external references ###
         self.NAVIGATION_MANAGER = NAVIGATION_MANAGER
-              
+
+        # set the ray to visible
+        self.NAVIGATION_MANAGER.ray_geometry.Tags.value = []
 
         self.sf_pointer_button.connect_from(self.NAVIGATION_MANAGER.INPUTS.sf_pointer_button)
 
@@ -377,7 +379,8 @@ class TeleportNavigation(NavigationTechnique):
             return
 
         ## To-Do: realize Teleport navigation here
-
+        self.NAVIGATION_MANAGER.calc_pick_result()
+        self.NAVIGATION_MANAGER.update_ray_visualization()
 
 
 
