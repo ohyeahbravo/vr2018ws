@@ -350,6 +350,7 @@ class SteeringNavigation(NavigationTechnique):
 class TeleportNavigation(NavigationTechnique):
 
     ### fields ###
+    offset = None
 
     ## input fields
     sf_pointer_button = avango.SFBool()
@@ -374,6 +375,25 @@ class TeleportNavigation(NavigationTechnique):
 
 
     ### callback functions ###
+    @field_has_changed(sf_pointer_button)
+    def sf_pointer_button_changed(self):
+        if self.sf_pointer_button.value == True: # button is pressed
+            # print("Button pressed")
+            if self.NAVIGATION_MANAGER.pick_result is not None:
+                # print("Have pick result")
+                if self.offset == None:
+                    self.offset = avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.get_head_matrix().get_translate())
+                print("offset: ")
+                print(self.offset.get_translate())
+                print("nav1: ")
+                print(self.NAVIGATION_MANAGER.sf_nav_mat.value.get_translate())
+                self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(0.0, self.offset.get_translate().y, 0.0) * avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()))
+                # self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()))
+                print("nav2: ")
+                print(self.NAVIGATION_MANAGER.sf_nav_mat.value.get_translate())
+                # self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.Transform.value *= avango.gua.make_inverse_mat(offset)
+
+
     def evaluate(self): # implement respective base-class function
         if self.enable_flag == False:
             return
@@ -381,6 +401,10 @@ class TeleportNavigation(NavigationTechnique):
         ## To-Do: realize Teleport navigation here
         self.NAVIGATION_MANAGER.calc_pick_result()
         self.NAVIGATION_MANAGER.update_ray_visualization()
+        # print("Navigation node position: ")
+        # print(self.NAVIGATION_MANAGER.VIEWING_SETUP.navigation_node.WorldTransform.value.get_translate())
+        # print("Head node position: ")
+        # print(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_translate())
 
 
 
