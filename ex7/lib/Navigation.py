@@ -350,7 +350,7 @@ class SteeringNavigation(NavigationTechnique):
 class TeleportNavigation(NavigationTechnique):
 
     ### fields ###
-    offset = None
+    offset = avango.gua.Vec3(0.0, 0.1, 0.0);
 
     ## input fields
     sf_pointer_button = avango.SFBool()
@@ -381,16 +381,8 @@ class TeleportNavigation(NavigationTechnique):
             # print("Button pressed")
             if self.NAVIGATION_MANAGER.pick_result is not None:
                 # print("Have pick result")
-                if self.offset == None:
-                    self.offset = avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.get_head_matrix().get_translate())
-                print("offset: ")
-                print(self.offset.get_translate())
-                print("nav1: ")
-                print(self.NAVIGATION_MANAGER.sf_nav_mat.value.get_translate())
-                self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(0.0, self.offset.get_translate().y, 0.0) * avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()))
+                self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(self.offset.x, self.offset.y, self.offset.z) * avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()))
                 # self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()))
-                print("nav2: ")
-                print(self.NAVIGATION_MANAGER.sf_nav_mat.value.get_translate())
                 # self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.Transform.value *= avango.gua.make_inverse_mat(offset)
 
 
