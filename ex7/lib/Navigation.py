@@ -433,20 +433,23 @@ class NavidgetNavigation(NavigationTechnique):
         _loader = avango.gua.nodes.TriMeshLoader()
 
 
-        self.camera_sphere_geometry = _loader.create_geometry_from_file("camera_sphere_geometry", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS)
-        self.camera_sphere_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,0.2))
+        self.camera_sphere_geometry = _loader.create_geometry_from_file("camera_sphere_geometry", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS | avango.gua.LoaderFlags.MAKE_PICKABLE)
+        self.camera_sphere_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,1.0,1.0,0.2))
         self.camera_sphere_geometry.Tags.value = ["invisible"]
         SCENEGRAPH.Root.value.Children.value.append(self.camera_sphere_geometry)
 
-        self.camera_geometry = _loader.create_geometry_from_file("camera_geometry", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS)
-        self.camera_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,0.0,1.0,1.0))
+        self.camera_geometry = _loader.create_geometry_from_file("camera_geometry", "data/objects/camera.obj", avango.gua.LoaderFlags.DEFAULTS)
+        #self.camera_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,0.0,1.0,1.0))
         self.camera_geometry.Tags.value = ["invisible"]
         SCENEGRAPH.Root.value.Children.value.append(self.camera_geometry)
+        for _child_node in self.camera_geometry.Children.value:
+            if _child_node.has_field("Material") == True:
+                _child_node.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,1.0,0.0,1.0))
 
         self.camera_ray_geometry = _loader.create_geometry_from_file("camera_ray_geometry", "data/objects/cylinder.obj", avango.gua.LoaderFlags.DEFAULTS)
-        self.camera_ray_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,0.0,1.0,1.0))
+        self.camera_ray_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,1.0,0.0,1.0))
         self.camera_ray_geometry.Tags.value = ["invisible"]
-        self.NAVIGATION_MANAGER.pointer_node.Children.value.append(self.camera_ray_geometry)
+        # self.NAVIGATION_MANAGER.pointer_node.Children.value.append(self.camera_ray_geometry)
         
         # set the ray to visible
         self.NAVIGATION_MANAGER.ray_geometry.Tags.value = []
@@ -506,22 +509,29 @@ class NavidgetNavigation(NavigationTechnique):
                     self.camera_sphere_geometry.Tags.value = []
 
                     # TODO: doesn't really start with the ray
-                    self.camera_ray_geometry.Transform.value = avango.gua.make_scale_mat(1.0/self.sphere_scale, 1.0/self.sphere_scale, 1.0/self.sphere_scale)
-                    self.camera_ray_geometry.Transform.value *= \
-                        avango.gua.make_trans_mat(0.0,0.0, self.camera_ray_distance) * \
-                        avango.gua.make_rot_mat(-90.0,1,0,0) * \
-                        avango.gua.make_scale_mat(2 * self.NAVIGATION_MANAGER.ray_thickness, self.camera_ray_distance, 2 * self.NAVIGATION_MANAGER.ray_thickness)
+                    # self.camera_ray_geometry.Transform.value = avango.gua.make_scale_mat(1.0/self.sphere_scale, 1.0/self.sphere_scale, 1.0/self.sphere_scale)
+                    # self.camera_ray_geometry.Transform.value *= \
+                    #     avango.gua.make_trans_mat(0.0,0.0, self.camera_ray_distance) * \
+                    #     avango.gua.make_rot_mat(-90.0,1,0,0) * \
+                    #     avango.gua.make_scale_mat(2 * self.NAVIGATION_MANAGER.ray_thickness, self.camera_ray_distance, 2 * self.NAVIGATION_MANAGER.ray_thickness)
                     # keep the transform value and only change its parent
-                    temporary = self.camera_ray_geometry.WorldTransform.value
-                    self.camera_sphere_geometry.Children.value.append(self.camera_ray_geometry)
-                    self.camera_ray_geometry.WorldTransform.value = temporary
+                    # temporary = self.camera_ray_geometry.WorldTransform.value
+                    # self.camera_sphere_geometry.Children.value.append(self.camera_ray_geometry)
+                    # self.camera_ray_geometry.WorldTransform.value = temporary
+                    # self.camera_ray_geometry.Tags.value = []
+
                     self.camera_ray_geometry.Tags.value = []
 
                     # TODO: can't really see it right now
-                    self.camera_geometry.Transform.value = self.NAVIGATION_MANAGER.intersection_geometry.Transform.value
-                    self.camera_ray_geometry.Children.value.append(self.camera_geometry)
-                    self.camera_geometry.Transform.value = avango.gua.make_scale_mat(self.camera_scale, self.camera_scale, self.camera_scale)
-                    self.camera_geometry.Transform.value *= avango.gua.make_trans_mat(0.0, 0.0, self.camera_ray_distance)a
+                    # self.camera_geometry.Transform.value = self.NAVIGATION_MANAGER.intersection_geometry.Transform.value
+                    # self.camera_ray_geometry.Children.value.append(self.camera_geometry)
+                    # self.camera_geometry.Transform.value = avango.gua.make_scale_mat(self.camera_scale, self.camera_scale, self.camera_scale)
+                    # self.camera_geometry.Transform.value *= avango.gua.make_trans_mat(0.0, 0.0, self.camera_ray_distance)
+
+                    self.NAVIGATION_MANAGER.intersection_geometry.Children.value.append(self.camera_geometry)
+                    # self.camera_geometry.Transform.value = avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate().x, \
+                    #     self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate().y, self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate().z + 60.0)
+
                     self.camera_geometry.Tags.value = []
             else:
                 if self.navidget_on == True:
@@ -539,3 +549,7 @@ class NavidgetNavigation(NavigationTechnique):
         ## To-Do: realize Navidget navigation here
         self.NAVIGATION_MANAGER.calc_pick_result()
         self.NAVIGATION_MANAGER.update_ray_visualization()
+
+        if self.navidget_on:
+            if self.NAVIGATION_MANAGER.pick_result != None and self.NAVIGATION_MANAGER.pick_result.Object.value == self.camera_sphere_geometry:
+                pass
