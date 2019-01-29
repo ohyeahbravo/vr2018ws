@@ -459,7 +459,8 @@ class NavidgetNavigation(NavigationTechnique):
         self.camera_ray_geometry = _loader.create_geometry_from_file("camera_ray_geometry", "data/objects/cylinder.obj", avango.gua.LoaderFlags.DEFAULTS)
         self.camera_ray_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,1.0,0.0,1.0))
         self.camera_ray_geometry.Tags.value = ["invisible"]
-        self.camera_geometry.Children.value.append(self.camera_ray_geometry)
+        SCENEGRAPH.Root.value.Children.value.append(self.camera_ray_geometry)
+        # self.camera_geometry.Children.value.append(self.camera_ray_geometry)
         # self.NAVIGATION_MANAGER.intersection_geometry.Children.value.append(self.camera_ray_geometry)
 
         self.sphere_center_geometry = _loader.create_geometry_from_file("camera_sphere_geometry", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS)
@@ -565,10 +566,11 @@ class NavidgetNavigation(NavigationTechnique):
             else:
                 if self.navidget_on == True:
                     self.animation_target = self.camera_geometry.WorldTransform.value.get_translate()
-                    self.rotation_target = self.camera_geometry.WorldTransform.value.get_rotate_scale_corrected()
-                    self.camera_sphere_geometry.Tags.value = ["invisible"]
-                    self.camera_geometry.Tags.value = ["invisible"]
-                    self.camera_ray_geometry.Tags.value = ["invisible"]
+                    # self.rotation_target = (avango.gua.make_rot_mat(180,0,1,0) * self.camera_geometry.WorldTransform.value).get_rotate_scale_corrected()
+                    # self.rotation_target = self.get_rotation_matrix_between_vectors(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_translate(), self.camera_geometry.WorldTransform.value.get_translate()).get_rotate_scale_corrected()
+                    self.rotation_target = (avango.gua.make_rot_mat(90,1,1,0) * self.camera_geometry.WorldTransform.value).get_rotate_scale_corrected()
+                    # self.rotation_target = (self.camera_geometry.Transform.value * avango.gua.make_rot_mat(-180.0,0,1,0)).get_rotate_scale_corrected()
+                    # self.rotation_target = self.get_rotation_matrix_between_vectors(self.NAVIGATION_MANAGER.get_navigation_matrix().get_translate(), self.camera_sphere_geometry.WorldTransform.value.get_translate()).get_rotate_scale_corrected()
                     self.navidget_on = False
                     self.animate = True
                     self.animation_start = time.clock()
@@ -579,57 +581,90 @@ class NavidgetNavigation(NavigationTechnique):
             return
 
         ## To-Do: realize Navidget navigation here
-        self.NAVIGATION_MANAGER.calc_pick_result()
-        self.NAVIGATION_MANAGER.update_ray_visualization()
+        if not self.animate:
+            self.NAVIGATION_MANAGER.calc_pick_result()
+            self.NAVIGATION_MANAGER.update_ray_visualization()
 
         if self.navidget_on:
             if self.NAVIGATION_MANAGER.pick_result != None and self.NAVIGATION_MANAGER.pick_result.Object.value == self.camera_sphere_geometry:
-                if self.init_navidget == True:
-                    if self.make_camera_appear == True:
-                        # self.NAVIGATION_MANAGER.ray_geometry.Children.value.append(self.camera_geometry)
-                        # scale = self.camera_geometry.Transform.value.get_scale()
-                        self.camera_geometry.WorldTransform.value = avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_translate())
-                        # rotation = self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_rotate_scale_corrected()
-                        rotation = avango.gua.make_rot_mat(self.NAVIGATION_MANAGER.pointer_node.WorldTransform.value.get_rotate())
-                        self.camera_geometry.Transform.value *= rotation
-                        self.camera_geometry.Transform.value *= avango.gua.make_scale_mat(2.0)
-                        # rotation = self.get_rotation_matrix_between_vectors(self.camera_geometry.WorldTransform.value.get_translate(), self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_translate())
-                        # self.camera_geometry.Transform.value *= rotation
-                        # rotation = get_rotation_matrix_between_vectors()
-                        # print("Rotation: ")
-                        # print(rotation)
-                        # scale = self.NAVIGATION_MANAGER.ray_geometry.Transform.value.get_scale()
+                self.distance = self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate().distance_to(self.camera_sphere_geometry.WorldTransform.value.get_translate())
+                # self.camera_ray_geometry.Transform.value = \
+                #     avango.gua.make_trans_mat(self.camera_sphere_geometry.WorldTransform.value.get_translate().x, self.camera_sphere_geometry.WorldTransform.value.get_translate().y, \
+                #         self.camera_sphere_geometry.WorldTransform.value.get_translate().z + 0.5 * self.distance) * \
+                #     avango.gua.make_rot_mat(-90.0, 1, 0, 0) * \
+                #     self.get_rotation_matrix_between_vectors(self.camera_sphere_geometry.WorldTransform.value.get_translate(), self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()) * \
+                #     avango.gua.make_scale_mat(2* self.NAVIGATION_MANAGER.ray_thickness, self.distance, 2* self.NAVIGATION_MANAGER.ray_thickness)
+                self.camera_ray_geometry.Transform.value = \
+                    avango.gua.make_trans_mat(self.camera_sphere_geometry.WorldTransform.value.get_translate().x, self.camera_sphere_geometry.WorldTransform.value.get_translate().y, \
+                        self.camera_sphere_geometry.WorldTransform.value.get_translate().z + 0.5 * self.distance) * \
+                    self.get_rotation_matrix_between_vectors(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate(), self.camera_sphere_geometry.WorldTransform.value.get_translate()) * \
+                    avango.gua.make_scale_mat(2* self.NAVIGATION_MANAGER.ray_thickness, self.distance, 2* self.NAVIGATION_MANAGER.ray_thickness)
+                # self.camera_ray_geometry.Transform.value *= self.get_rotation_matrix_between_vectors(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate(), self.camera_sphere_geometry.WorldTransform.value.get_translate())
 
-                        # self.camera_geometry.WorldTransform.value = avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate())
-                        # rotation = self.get_rotation_matrix_between_vectors(self.camera_geometry.WorldTransform.value.get_translate(), self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_translate())
-                        # print("Rotation: ")
-                        # print(rotation)
-                        # self.camera_geometry.Transform.value = avango.gua.make_trans_mat(1.0, 0.0, 0.0) * rotation * avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate())
-                        self.camera_geometry.Tags.value = []
-                        self.make_camera_appear = False
+            #     if self.init_navidget == True:
+            #         if self.make_camera_appear == True:
+            #             # self.NAVIGATION_MANAGER.ray_geometry.Children.value.append(self.camera_geometry)
+            #             # scale = self.camera_geometry.Transform.value.get_scale()
+            #             self.camera_geometry.WorldTransform.value = avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_translate())
+            #             # rotation = self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_rotate_scale_corrected()
+            #             rotation = avango.gua.make_rot_mat(self.NAVIGATION_MANAGER.pointer_node.WorldTransform.value.get_rotate())
+            #             self.camera_geometry.Transform.value *= rotation
+            #             self.camera_geometry.Transform.value *= avango.gua.make_scale_mat(2.0)
+            #             # rotation = self.get_rotation_matrix_between_vectors(self.camera_geometry.WorldTransform.value.get_translate(), self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_translate())
+            #             # self.camera_geometry.Transform.value *= rotation
+            #             # rotation = get_rotation_matrix_between_vectors()
+            #             # print("Rotation: ")
+            #             # print(rotation)
+            #             # scale = self.NAVIGATION_MANAGER.ray_geometry.Transform.value.get_scale()
 
-                    distance_to_intersection = self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate().distance_to(self.camera_sphere_geometry.WorldTransform.value.get_translate())
-                    distance_to_camera = self.camera_geometry.WorldTransform.value.get_translate().distance_to(self.sphere_center_geometry.WorldTransform.value.get_translate())
-                    self.distance = distance_to_camera
-                    self.camera_ray_geometry.Transform.value = \
-                        avango.gua.make_trans_mat(0.0,0.0,self.distance * -0.5) * \
-                        avango.gua.make_rot_mat(-90.0,1,0,0) * \
-                        avango.gua.make_scale_mat(2* self.NAVIGATION_MANAGER.ray_thickness, self.distance, 2* self.NAVIGATION_MANAGER.ray_thickness)
+            #             # self.camera_geometry.WorldTransform.value = avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate())
+            #             # rotation = self.get_rotation_matrix_between_vectors(self.camera_geometry.WorldTransform.value.get_translate(), self.NAVIGATION_MANAGER.ray_geometry.WorldTransform.value.get_translate())
+            #             # print("Rotation: ")
+            #             # print(rotation)
+            #             # self.camera_geometry.Transform.value = avango.gua.make_trans_mat(1.0, 0.0, 0.0) * rotation * avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate())
+            #             self.camera_geometry.Tags.value = []
+            #             self.make_camera_appear = False
 
-                    self.temp = self.camera_geometry.WorldTransform.value
-                    self.SCENEGRAPH.Root.value.Children.value.remove(self.camera_geometry)
-                    self.NAVIGATION_MANAGER.intersection_geometry.Children.value.append(self.camera_geometry)
-                    self.camera_geometry.WorldTransform.value = self.temp
-                    self.init_navidget = False
+            #         distance_to_intersection = self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate().distance_to(self.camera_sphere_geometry.WorldTransform.value.get_translate())
+            #         distance_to_camera = self.camera_geometry.WorldTransform.value.get_translate().distance_to(self.sphere_center_geometry.WorldTransform.value.get_translate())
+            #         self.distance = distance_to_camera
+            #         self.camera_ray_geometry.Transform.value = \
+            #             avango.gua.make_trans_mat(0.0,0.0,self.distance * -0.5) * \
+            #             avango.gua.make_rot_mat(-90.0,1,0,0) * \
+            #             avango.gua.make_scale_mat(2* self.NAVIGATION_MANAGER.ray_thickness, self.distance, 2* self.NAVIGATION_MANAGER.ray_thickness)
 
-            self.camera_ray_geometry.Transform.value *= self.get_rotation_matrix_between_vectors(self.camera_geometry.WorldTransform.value.get_translate(), self.camera_sphere_geometry.WorldTransform.value.get_translate())
+            #         self.temp = self.camera_geometry.WorldTransform.value
+            #         self.SCENEGRAPH.Root.value.Children.value.remove(self.camera_geometry)
+            #         self.NAVIGATION_MANAGER.intersection_geometry.Children.value.append(self.camera_geometry)
+            #         self.camera_geometry.WorldTransform.value = self.temp
+            #         self.init_navidget = False
+
+            # self.camera_ray_geometry.Transform.value *= self.get_rotation_matrix_between_vectors(self.camera_geometry.WorldTransform.value.get_translate(), self.camera_sphere_geometry.WorldTransform.value.get_translate())
 
         if self.animate:
+            # mat = avango.gua.make_trans_mat(self.camera_geometry.WorldTransform.value.get_translate())
+            # rot = self.get_rotation_matrix_between_vectors(mat.get_translate(), self.camera_sphere_geometry.WorldTransform.value.get_translate())
+            # mat *= rot
+            # self.NAVIGATION_MANAGER.set_navigation_matrix(mat)
+            # print(self.NAVIGATION_MANAGER.get_navigation_matrix().get_rotate())
             time_since_start = time.clock() - self.animation_start
-            if time_since_start < 3.0:
+            if time_since_start < self.navidget_duration:
                 fraction = time_since_start / self.navidget_duration
+                # start_rot = self.NAVIGATION_MANAGER.get_navigation_matrix().get_rotate_scale_corrected()
+                # start_rot = self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_rotate_scale_corrected()
                 start_vec = self.NAVIGATION_MANAGER.get_navigation_matrix().get_translate()
-                self.NAVIGATION_MANAGER.set_navigation_matrix(start_vec.lerp_to(self.animation_target, fraction)
+                # mat = avango.gua.make_rot_mat(start_rot.slerp_to(self.rotation_target, fraction)) * avango.gua.make_trans_mat(start_vec.lerp_to(self.animation_target, fraction))
+                mat = avango.gua.make_trans_mat(start_vec.lerp_to(self.animation_target, fraction))
+                self.NAVIGATION_MANAGER.set_navigation_matrix(mat)
+            # elif time_since_start >= self.navidget_duration and time_since_start < 2 * self.navidget_duration:
+            #     fraction = time_since_start / (2 * self.navidget_duration)
+            #     # start_rot = self.NAVIGATION_MANAGER.get_navigation_matrix().get_rotate_scale_corrected()
+            #     start_rot = self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_rotate_scale_corrected()
+            #     mat = avango.gua.make_rot_mat(start_rot.slerp_to(self.rotation_target, fraction))
+            #     self.NAVIGATION_MANAGER.set_navigation_matrix(mat)
             else:
+                self.camera_sphere_geometry.Tags.value = ["invisible"]
+                self.camera_geometry.Tags.value = ["invisible"]
+                self.camera_ray_geometry.Tags.value = ["invisible"]
                 time_since_start = None
                 self.animate = False
