@@ -126,14 +126,20 @@ class NavigationManager(avango.script.Script):
         if self.active_navigation_technique_index == 0: # Steering Navigation
             self.active_navigation_technique = self.steeringNavigation
             print("Switch to Steering Navigation")
+            self.ray_geometry.Tags.value = ["invisible"]
+            self.intersection_geometry.Tags.value = ["invisible"]
 
         elif self.active_navigation_technique_index == 1: # Teleport Navigation
             self.active_navigation_technique = self.teleportNavigation
             print("Switch to Teleport Navigation")
+            self.ray_geometry.Tags.value = []
+            self.intersection_geometry.Tags.value = []
 
         elif self.active_navigation_technique_index == 2: # Navidget Navigation
             self.active_navigation_technique = self.navidgetNavigation            
             print("Switch to Navidget Navigation")
+            self.ray_geometry.Tags.value = []
+            self.intersection_geometry.Tags.value = []
                         
         self.active_navigation_technique.enable(True)
 
@@ -413,7 +419,8 @@ class NavidgetNavigation(NavigationTechnique):
     sf_pointer_button = avango.SFBool()
 
     ### variables ###
-    offset = avango.gua.Vec3(-3.6, -0.9, 0.5)
+    offset = avango.gua.Vec3(-3.6, 0.6, 1.0)
+    # offset = avango.gua.Vec3(-3.0,0.0,0.0)
 
     sphere_scale = 50.0
     sphere_radius = None
@@ -472,9 +479,6 @@ class NavidgetNavigation(NavigationTechnique):
         self.sphere_center_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,1.0))
         self.sphere_center_geometry.Tags.value = ["invisible"]
         self.camera_sphere_geometry.Children.value.append(self.sphere_center_geometry)
-
-        # set the ray to visible
-        self.NAVIGATION_MANAGER.ray_geometry.Tags.value = []
 
         self.sf_pointer_button.connect_from(self.NAVIGATION_MANAGER.INPUTS.sf_pointer_button)
 
@@ -540,27 +544,21 @@ class NavidgetNavigation(NavigationTechnique):
                     self.camera_geometry.Tags.value = []
             else:
                 if self.navidget_on == True:
-                    # mat = avango.gua.make_inverse_mat(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value) * self.camera_geometry.WorldTransform.value
+                    # self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_rot_mat(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_rotate_scale_corrected()) * self.NAVIGATION_MANAGER.get_navigation_matrix())
                     self.animation_start_pos = self.NAVIGATION_MANAGER.get_navigation_matrix().get_translate()
-                    # self.animation_start_rot = self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_rotate_scale_corrected()
-                    self.animation_start_rot = avango.gua.Quat()
-                    # self.animation_target = mat.get_translate()
+                    # self.animation_start_rot = (avango.gua.make_rot_mat(-90,0,1,0) * self.NAVIGATION_MANAGER.get_navigation_matrix()).get_rotate_scale_corrected()
+                    self.animation_start_rot = self.NAVIGATION_MANAGER.get_navigation_matrix().get_rotate_scale_corrected()
                     self.animation_target = self.camera_geometry.WorldTransform.value.get_translate() + self.offset
-                    ray_sphere_to_user = self.camera_sphere_geometry.WorldTransform.value.get_translate() - self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_translate()
-                    ray_sphere_to_camera = self.camera_sphere_geometry.WorldTransform.value.get_translate() - self.camera_geometry.WorldTransform.value.get_translate()
-                    rotation = self.get_rotation_matrix_between_vectors(ray_sphere_to_user, ray_sphere_to_camera)
-                    self.rotation_target = rotation.get_rotate_scale_corrected()
+                    # self.rotation_target = (avango.gua.make_rot_mat(90,1,0,0) * avango.gua.make_rot_mat(-90,0,0,1) * self.camera_rotation_group.WorldTransform.value).get_rotate_scale_corrected()
+                    self.rotation_target = (avango.gua.make_rot_mat(-90,0,0,1) * self.camera_rotation_group.Transform.value).get_rotate_scale_corrected()
                     self.navidget_on = False
-                    self.animate = True
+                    self.animate = True 
                     self.animation_start = time.clock()
                 
 
     def evaluate(self): # implement respective base-class function
         if self.enable_flag == False:
             return
-
-        # self.NAVIGATION_MANAGER.calc_pick_result()
-        # self.NAVIGATION_MANAGER.update_ray_visualization()
 
         ## To-Do: realize Navidget navigation here
         if not self.animate:
@@ -587,16 +585,13 @@ class NavidgetNavigation(NavigationTechnique):
             time_since_start = time.clock() - self.animation_start
             if time_since_start < self.navidget_duration:
                 fraction = time_since_start / self.navidget_duration
-                mat = avango.gua.make_rot_mat(self.animation_start_rot.slerp_to(self.rotation_target, fraction))# * avango.gua.make_trans_mat(self.animation_start_pos.lerp_to(self.animation_target, fraction))
-                # mat = avango.gua.make_trans_mat(self.animation_start_pos.lerp_to(self.animation_target, fraction))
+                mat = avango.gua.make_trans_mat(self.animation_start_pos.lerp_to(self.animation_target, fraction)) * avango.gua.make_rot_mat(self.animation_start_rot.slerp_to(self.rotation_target, fraction))
+                # self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_rot_mat(90.0,0,1,0) * mat)
                 self.NAVIGATION_MANAGER.set_navigation_matrix(mat)
-                # self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(self.animation_start_pos.lerp_to(self.animation_target, fraction)) * avango.gua.make_rot_mat(self.animation_start_rot.slerp_to(self.rotation_target, fraction)))
                 print("Camera rotation:")
-                print(self.camera_rotation_group.Transform.value.get_rotate_scale_corrected())
+                print(self.camera_geometry.WorldTransform.value.get_rotate_scale_corrected())
                 print("Navigation rotation: ")
                 print(self.NAVIGATION_MANAGER.get_navigation_matrix().get_rotate_scale_corrected())
-                # print("Head position: ")
-                # print(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_translate())
             else:
                 self.camera_sphere_geometry.Tags.value = ["invisible"]
                 self.camera_geometry.Tags.value = ["invisible"]
