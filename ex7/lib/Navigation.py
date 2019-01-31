@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# Hiyeon Kim, 118654
+# Lars Meyer, 114719
+
 ### import guacamole libraries
 import avango
 import avango.gua
@@ -387,13 +390,9 @@ class TeleportNavigation(NavigationTechnique):
             pass
         else:
             if self.sf_pointer_button.value == True: # button is pressed
-                print("We're in the teleport pointer function")
-                # print("Button pressed")
                 if self.NAVIGATION_MANAGER.pick_result is not None:
-                    # print("Have pick result")
-                    self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(self.offset.x, self.offset.y, self.offset.z) * avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()))
-                    # self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()))
-                    # self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.Transform.value *= avango.gua.make_inverse_mat(offset)
+                    self.NAVIGATION_MANAGER.set_navigation_matrix(avango.gua.make_inverse_mat(avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.Transform.value.get_translate())) * avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()) * avango.gua.make_trans_mat(0.0, 1.8, 0.0))
+
 
 
     def evaluate(self): # implement respective base-class function
@@ -403,10 +402,6 @@ class TeleportNavigation(NavigationTechnique):
         ## To-Do: realize Teleport navigation here
         self.NAVIGATION_MANAGER.calc_pick_result()
         self.NAVIGATION_MANAGER.update_ray_visualization()
-        # print("Navigation node position: ")
-        # print(self.NAVIGATION_MANAGER.VIEWING_SETUP.navigation_node.WorldTransform.value.get_translate())
-        # print("Head node position: ")
-        # print(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_translate())
 
 
 
@@ -419,14 +414,8 @@ class NavidgetNavigation(NavigationTechnique):
     sf_pointer_button = avango.SFBool()
 
     ### variables ###
-    offset = avango.gua.Vec3(-3.292, -0.481, -1.77)
-    # offset = avango.gua.Vec3(-3.0,0.0,0.0)
-
     sphere_scale = 50.0
     sphere_radius = None
-    camera_scale = 8.0
-    camera_ray_distance = 100.0
-    initial_camera_position = None
 
     make_camera_appear = False
     animate = False
@@ -477,7 +466,7 @@ class NavidgetNavigation(NavigationTechnique):
         self.camera_ray_geometry_y.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,1.0,0.0,1.0))
         self.camera_ray_geometry_y.Tags.value = ["invisible"]
         self.camera_ray_geometry_z = _loader.create_geometry_from_file("camera_ray_geometry", "data/objects/cylinder.obj", avango.gua.LoaderFlags.DEFAULTS)
-        self.camera_ray_geometry_z.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,0.0,1.0,1.0))
+        self.camera_ray_geometry_z.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,1.0,0.0,1.0))
         self.camera_ray_geometry_z.Tags.value = ["invisible"]
         self.camera_scale_group.Children.value.append(self.camera_ray_geometry_x)
         self.camera_scale_group.Children.value.append(self.camera_ray_geometry_y)
@@ -492,7 +481,7 @@ class NavidgetNavigation(NavigationTechnique):
         self.cube_ray_y = _loader.create_geometry_from_file("cube_ray", "data/objects/cylinder.obj", avango.gua.LoaderFlags.DEFAULTS)
         self.cube_ray_y.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,1.0,0.0,1.0))
         self.cube_ray_z = _loader.create_geometry_from_file("cube_ray", "data/objects/cylinder.obj", avango.gua.LoaderFlags.DEFAULTS)
-        self.cube_ray_z.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,0.0,1.0,1.0))
+        self.cube_ray_z.Material.value.set_uniform("Color", avango.gua.Vec4(0.0,1.0,0.0,1.0))
         self.cube.Children.value.append(self.cube_ray_x)
         self.cube.Children.value.append(self.cube_ray_y)
         self.cube.Children.value.append(self.cube_ray_z)
@@ -502,6 +491,10 @@ class NavidgetNavigation(NavigationTechnique):
             avango.gua.make_scale_mat(self.NAVIGATION_MANAGER.ray_thickness, 2.0, self.NAVIGATION_MANAGER.ray_thickness)
         self.cube_ray_z.Transform.value = \
             avango.gua.make_scale_mat(self.NAVIGATION_MANAGER.ray_thickness, self.NAVIGATION_MANAGER.ray_thickness, 2.0)
+        self.cube_ray_x.Tags.value = ["invisible"]
+        self.cube_ray_y.Tags.value = ["invisible"]
+        self.cube_ray_z.Tags.value = ["invisible"]
+
 
         self.sphere_center_geometry = _loader.create_geometry_from_file("camera_sphere_geometry", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS)
         self.sphere_center_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,1.0))
@@ -556,7 +549,6 @@ class NavidgetNavigation(NavigationTechnique):
         else:
             if self.sf_pointer_button.value == True: # button is pressed
                 if self.NAVIGATION_MANAGER.pick_result is not None:
-                    print("We're in the navidget pointer function")
                     self.navidget_on = True
                     self.camera_sphere_geometry.Transform.value = self.NAVIGATION_MANAGER.intersection_geometry.Transform.value
                     self.camera_sphere_geometry.Transform.value *= avango.gua.make_scale_mat(self.sphere_scale)
@@ -568,34 +560,21 @@ class NavidgetNavigation(NavigationTechnique):
                     self.sphere_center_geometry.Tags.value = []
 
                     self.make_camera_appear = True
-                    self.camera_ray_geometry_x.Tags.value = []
-                    self.camera_ray_geometry_y.Tags.value = []
                     self.camera_ray_geometry_z.Tags.value = []
                     self.camera_geometry.Tags.value = []
             else:
-                if self.navidget_on == True:
+                if self.navidget_on == True and self.NAVIGATION_MANAGER.pick_result != None and self.NAVIGATION_MANAGER.pick_result.Object.value == self.camera_sphere_geometry:
                     self.animation_start_pos = self.NAVIGATION_MANAGER.get_navigation_matrix().get_translate()
                     self.animation_start_rot = self.NAVIGATION_MANAGER.get_navigation_matrix().get_rotate_scale_corrected()
-                    self.invisible_viewing_direction = avango.gua.nodes.TransformNode()
-                    self.NAVIGATION_MANAGER.VIEWING_SETUP.navigation_node.Children.value.append(self.invisible_viewing_direction)
-                    self.invisible_viewing_direction.Transform.value = avango.gua.make_trans_mat(0, 0, -1)
-                    # self.animation_start_pos = self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_translate()
-                    # self.animation_start_rot = self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_rotate_scale_corrected()
-                    self.animation_target = self.camera_geometry.WorldTransform.value.get_translate() + self.offset
-                    view_direction = self.NAVIGATION_MANAGER.get_navigation_matrix().get_translate() - self.invisible_viewing_direction.WorldTransform.value.get_translate()
-                    ray_user_to_sphere = self.NAVIGATION_MANAGER.get_navigation_matrix().get_translate() - self.camera_sphere_geometry.WorldTransform.value.get_translate()
-                    ray_camera_to_intersection = self.camera_geometry.WorldTransform.value.get_translate() - self.NAVIGATION_MANAGER.intersection_geometry.WorldTransform.value.get_translate()
-                    rotation = self.get_rotation_matrix_between_vectors(view_direction, ray_camera_to_intersection)
-                    rotation = avango.gua.make_rot_mat(self.NAVIGATION_MANAGER.get_navigation_matrix().get_rotate_scale_corrected()) * rotation
-                    # self.rotation_target = rotation.get_rotate_scale_corrected()
+                    self.animation_target = (avango.gua.make_inverse_mat(avango.gua.make_trans_mat(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.Transform.value.get_translate())) * avango.gua.make_trans_mat(self.camera_geometry.WorldTransform.value.get_translate())).get_translate() #+ avango.gua.Vec3(0.0, 2.0, 0.5)
                     self.rotation_target = (avango.gua.make_rot_mat(self.camera_geometry.WorldTransform.value.get_rotate_scale_corrected()) * avango.gua.make_rot_mat(90,0,1,0)).get_rotate_scale_corrected()
-                    print("Camera group rotation: ")
-                    print(self.rotation_target)
-                    print("Selfmade rotation matrix:")
-                    print(rotation.get_rotate_scale_corrected())
                     self.navidget_on = False
                     self.animate = True 
                     self.animation_start = time.clock()
+                else:
+                    self.camera_sphere_geometry.Tags.value = ["invisible"]
+                    self.camera_geometry.Tags.value = ["invisible"]
+                    self.camera_ray_geometry_z.Tags.value = ["invisible"]
                 
 
     def evaluate(self): # implement respective base-class function
@@ -618,9 +597,9 @@ class NavidgetNavigation(NavigationTechnique):
                         avango.gua.make_trans_mat(0.0,0.0, 2*self.sphere_radius+0.5*self.sphere_radius) * \
                         avango.gua.make_scale_mat(3 * self.NAVIGATION_MANAGER.ray_thickness, 2 * self.sphere_radius, 3 * self.NAVIGATION_MANAGER.ray_thickness)
                     self.camera_ray_geometry_z.Transform.value = \
-                        avango.gua.make_trans_mat(0.0,0.0, self.sphere_radius) * \
+                        avango.gua.make_trans_mat(0.0,0.0, self.sphere_radius + 0.5 * self.sphere_radius) * \
                         avango.gua.make_rot_mat(-90.0,1,0,0) * \
-                        avango.gua.make_scale_mat(3 * self.NAVIGATION_MANAGER.ray_thickness, 2 * self.sphere_radius, 3 * self.NAVIGATION_MANAGER.ray_thickness)
+                        avango.gua.make_scale_mat(3 * self.NAVIGATION_MANAGER.ray_thickness, self.sphere_radius, 3 * self.NAVIGATION_MANAGER.ray_thickness)
                     self.camera_geometry.Transform.value = avango.gua.make_trans_mat(0.0, 0.0, (2 * self.sphere_radius)) * avango.gua.make_scale_mat(3.0)
                     self.ray_center_to_camera = self.camera_geometry.WorldTransform.value.get_translate() - self.camera_sphere_geometry.WorldTransform.value.get_translate()
                     self.make_camera_appear = False
@@ -633,20 +612,13 @@ class NavidgetNavigation(NavigationTechnique):
             time_since_start = time.clock() - self.animation_start
             if time_since_start < self.navidget_duration:
                 fraction = time_since_start / self.navidget_duration
-                mat = avango.gua.make_trans_mat(self.animation_start_pos.lerp_to(self.animation_target, fraction)) * avango.gua.make_rot_mat(self.animation_start_rot.slerp_to(self.rotation_target, fraction))
+                # mat = avango.gua.make_rot_mat(self.animation_start_rot.slerp_to(self.rotation_target, fraction)) * avango.gua.make_trans_mat(self.animation_start_pos.lerp_to(self.animation_target, fraction))
+                mat = avango.gua.make_trans_mat(self.animation_start_pos.lerp_to(self.animation_target, fraction))
                 self.NAVIGATION_MANAGER.set_navigation_matrix(mat)
-                print("Camera position:")
-                print(self.camera_geometry.WorldTransform.value.get_translate())
-                print("Navigation position: ")
-                print(self.NAVIGATION_MANAGER.get_navigation_matrix().get_translate())
-                print("Head position: ")
-                print(self.NAVIGATION_MANAGER.VIEWING_SETUP.head_node.WorldTransform.value.get_translate())
             else:
                 self.cube.Transform.value = avango.gua.make_trans_mat(self.camera_geometry.WorldTransform.value.get_translate()) * avango.gua.make_rot_mat(self.camera_geometry.WorldTransform.value.get_rotate_scale_corrected())
                 self.camera_sphere_geometry.Tags.value = ["invisible"]
                 self.camera_geometry.Tags.value = ["invisible"]
-                self.camera_ray_geometry_x.Tags.value = ["invisible"]
-                self.camera_ray_geometry_y.Tags.value = ["invisible"]
                 self.camera_ray_geometry_z.Tags.value = ["invisible"]
                 time_since_start = None
                 self.animate = False
